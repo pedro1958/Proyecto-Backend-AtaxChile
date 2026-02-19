@@ -4,6 +4,7 @@ import { getRepositoryToken } from '@nestjs/typeorm'
 import * as request from 'supertest'
 import { User, Rol } from '../src/users/entities/user.entity'
 import { UsersModule } from '../src/users/users.module'
+import { MailerService } from '../src/mailer/mailer.service'
 
 const mockUser: User = {
   id: 1,
@@ -12,6 +13,9 @@ const mockUser: User = {
   password: 'hashed_password',
   rol: Rol.ADMIN,
   activo: true,
+  cuentaActivada: false,
+  tokenActivacion: 'token-uuid-123',
+  tokenExpiracion: new Date(Date.now() + 24 * 60 * 60 * 1000),
   createdAt: new Date(),
   updatedAt: new Date(),
 }
@@ -23,6 +27,10 @@ const mockRepo = {
   save: jest.fn().mockResolvedValue(mockUser),
 }
 
+const mockMailer = {
+  enviarActivacion: jest.fn().mockResolvedValue(undefined),
+}
+
 describe('Users (e2e)', () => {
   let app: INestApplication
 
@@ -32,6 +40,8 @@ describe('Users (e2e)', () => {
     })
       .overrideProvider(getRepositoryToken(User))
       .useValue(mockRepo)
+      .overrideProvider(MailerService)
+      .useValue(mockMailer)
       .compile()
 
     app = moduleFixture.createNestApplication()
@@ -51,6 +61,7 @@ describe('Users (e2e)', () => {
     mockRepo.find.mockResolvedValue([mockUser])
     mockRepo.create.mockReturnValue(mockUser)
     mockRepo.save.mockResolvedValue(mockUser)
+    mockMailer.enviarActivacion.mockResolvedValue(undefined)
   })
 
   describe('GET /api/v1/users', () => {
@@ -88,7 +99,7 @@ describe('Users (e2e)', () => {
   })
 
   describe('POST /api/v1/users', () => {
-    it('debe crear usuario y retornarlo sin password', async () => {
+    it('debe crear usuario, enviar correo y retornar mensaje de confirmación', async () => {
       mockRepo.findOneBy.mockResolvedValue(null)
 
       const res = await request(app.getHttpServer())
@@ -101,7 +112,13 @@ describe('Users (e2e)', () => {
         })
         .expect(201)
 
+      expect(res.body).toHaveProperty('message')
+      expect(res.body.message).toContain('admin@test.cl')
       expect(res.body).not.toHaveProperty('password')
+      expect(mockMailer.enviarActivacion).toHaveBeenCalledWith(
+        'admin@test.cl',
+        expect.any(String),
+      )
     })
 
     it('debe retornar 400 si faltan campos obligatorios', async () => {
@@ -135,10 +152,10 @@ describe('Users (e2e)', () => {
         .expect(400)
     })
 
-    it('debe retornar 409 si el email ya está registrado', async () => {
-      mockRepo.findOneBy.mockResolvedValue(mockUser)
+    it('debe retornar 409 con mensaje de activación pendiente si la cuenta no está activada', async () => {
+      mockRepo.findOneBy.mockResolvedValue({ ...mockUser, cuentaActivada: false })
 
-      await request(app.getHttpServer())
+      const res = await request(app.getHttpServer())
         .post('/api/v1/users')
         .send({
           nombre: 'Admin',
@@ -147,6 +164,24 @@ describe('Users (e2e)', () => {
           rol: Rol.ADMIN,
         })
         .expect(409)
+
+      expect(res.body.message).toContain('pendiente de activación')
+    })
+
+    it('debe retornar 409 si el email ya está registrado y activado', async () => {
+      mockRepo.findOneBy.mockResolvedValue({ ...mockUser, cuentaActivada: true })
+
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/users')
+        .send({
+          nombre: 'Admin',
+          email: 'admin@test.cl',
+          password: 'password123',
+          rol: Rol.ADMIN,
+        })
+        .expect(409)
+
+      expect(res.body.message).toContain('El email ya está registrado')
     })
   })
 
@@ -205,6 +240,44 @@ describe('Users (e2e)', () => {
       mockRepo.findOneBy.mockResolvedValue(null)
 
       await request(app.getHttpServer()).delete('/api/v1/users/999').expect(404)
+    })
+  })
+
+  describe('GET /api/v1/users/activar/:token', () => {
+    it('debe activar cuenta con token válido', async () => {
+      mockRepo.findOneBy.mockResolvedValue({
+        ...mockUser,
+        tokenExpiracion: new Date(Date.now() + 3600000),
+      })
+      mockRepo.save.mockResolvedValue({
+        ...mockUser,
+        cuentaActivada: true,
+        tokenActivacion: null,
+        tokenExpiracion: null,
+      })
+
+      await request(app.getHttpServer())
+        .get('/api/v1/users/activar/token-uuid-123')
+        .expect(200)
+    })
+
+    it('debe retornar 404 si el token no existe', async () => {
+      mockRepo.findOneBy.mockResolvedValue(null)
+
+      await request(app.getHttpServer())
+        .get('/api/v1/users/activar/token-invalido')
+        .expect(404)
+    })
+
+    it('debe retornar 400 si el token ha expirado', async () => {
+      mockRepo.findOneBy.mockResolvedValue({
+        ...mockUser,
+        tokenExpiracion: new Date(Date.now() - 3600000),
+      })
+
+      await request(app.getHttpServer())
+        .get('/api/v1/users/activar/token-expirado')
+        .expect(400)
     })
   })
 })

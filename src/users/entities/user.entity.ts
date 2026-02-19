@@ -33,6 +33,15 @@ export class User {
   @Column({ default: true })
   activo: boolean
 
+  @Column({ default: false })
+  cuentaActivada: boolean
+
+  @Column({ type: 'varchar', nullable: true })
+  tokenActivacion: string | null
+
+  @Column({ type: 'datetime', nullable: true })
+  tokenExpiracion: Date | null
+
   @CreateDateColumn()
   createdAt: Date
 

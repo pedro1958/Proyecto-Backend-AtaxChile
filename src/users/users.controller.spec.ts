@@ -10,6 +10,9 @@ const mockUser = {
   email: 'admin@test.cl',
   rol: Rol.ADMIN,
   activo: true,
+  cuentaActivada: false,
+  tokenActivacion: null,
+  tokenExpiracion: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 }
@@ -33,6 +36,7 @@ describe('UsersController', () => {
               .fn()
               .mockResolvedValue({ ...mockUser, activo: false }),
             remove: jest.fn().mockResolvedValue(undefined),
+            activarCuenta: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],
@@ -63,15 +67,17 @@ describe('UsersController', () => {
   })
 
   describe('create', () => {
-    it('debe llamar a service.create con el DTO', async () => {
+    it('debe llamar a service.create con el DTO y retornar mensaje de confirmación', async () => {
       const dto: CreateUserDto = {
         nombre: 'Admin',
         email: 'admin@test.cl',
         password: 'password123',
         rol: Rol.ADMIN,
       }
-      await controller.create(dto)
+      const result = await controller.create(dto)
       expect(service.create).toHaveBeenCalledWith(dto)
+      expect(result).toHaveProperty('message')
+      expect(result.message).toContain('admin@test.cl')
     })
   })
 
@@ -93,6 +99,13 @@ describe('UsersController', () => {
     it('debe llamar a service.remove con el id correcto', async () => {
       await controller.remove(1)
       expect(service.remove).toHaveBeenCalledWith(1)
+    })
+  })
+
+  describe('activarCuenta', () => {
+    it('debe llamar a service.activarCuenta con el token', async () => {
+      await controller.activarCuenta('token-uuid-123')
+      expect(service.activarCuenta).toHaveBeenCalledWith('token-uuid-123')
     })
   })
 })

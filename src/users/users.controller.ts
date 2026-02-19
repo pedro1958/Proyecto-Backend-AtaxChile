@@ -25,6 +25,12 @@ export class UsersController {
     return this.usersService.findAll()
   }
 
+  // público — llamado desde el enlace del correo
+  @Get('activar/:token')
+  activarCuenta(@Param('token') token: string) {
+    return this.usersService.activarCuenta(token)
+  }
+
   // superadmin, admin
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
@@ -33,8 +39,11 @@ export class UsersController {
 
   // superadmin
   @Post()
-  create(@Body() dto: CreateUserDto) {
-    return this.usersService.create(dto)
+  async create(@Body() dto: CreateUserDto) {
+    await this.usersService.create(dto)
+    return {
+      message: `Hemos enviado un correo a ${dto.email} para activar la cuenta`,
+    }
   }
 
   // superadmin
