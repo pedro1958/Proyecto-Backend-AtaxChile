@@ -2,8 +2,7 @@
   "name": "backend",
   "version": "0.0.1",
   "description": "Backend para administrar los miembros de Asociación AtaxChile",
-  "author": "Pedro Aros Pizarro <pedro_aros@msn.com>
-  ",
+  "author": "Pedro Aros Pizarro <pedro_aros@msn.com>",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
