@@ -1,5 +1,7 @@
 # Documentación Técnica Consolidada
+
 # AtaxChile Backend — Sistema Web de Registro de Pacientes
+
 ### Agrupación de Pacientes con Ataxia – Chile
 
 ---
@@ -64,7 +66,7 @@ Cada miembro debe:
 - Contar con los siguientes campos obligatorios:
   - Nombre completo.
   - Documento de identidad.
-  - Año de nacimiento.
+  - Fecha de nacimiento.
   - Región.
   - Tipo de ataxia.
   - Consentimiento registrado.
@@ -126,10 +128,10 @@ Validaciones obligatorias en backend:
 El sistema puede almacenar:
 
 - Región.
-- Comuna (opcional).
-- Año de nacimiento.
+- Comuna.
+- Fecha de nacimiento.
 - Sexo.
-- Año de diagnóstico (opcional).
+- Año de diagnóstico.
 
 Reglas:
 
@@ -163,12 +165,12 @@ Reglas:
 
 Los roles aplican exclusivamente a **usuarios administrativos** (`users`). Los miembros no poseen rol en el sistema.
 
-| Rol | Descripción |
-|---|---|
+| Rol          | Descripción                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------------- |
 | `superadmin` | Gestión completa del sistema, incluida la administración de otros usuarios administrativos. |
-| `admin` | Administración general: miembros, catálogos, reportes y lectura completa. |
-| `secretario` | Gestión de miembros: crear, actualizar y desactivar registros. |
-| `tesorero` | Acceso a membresías y cuotas. |
+| `admin`      | Administración general: miembros, catálogos, reportes y lectura completa.                   |
+| `secretario` | Gestión de miembros: crear, actualizar y desactivar registros.                              |
+| `tesorero`   | Acceso a membresías y cuotas.                                                               |
 
 ### 8.2 Reglas
 
@@ -375,13 +377,13 @@ Toda nueva funcionalidad debe respetar la siguiente separación de responsabilid
 Routes → Middleware (validación + auth) → Controllers → Services → Models
 ```
 
-| Capa | Responsabilidad | Prohibiciones |
-|---|---|---|
-| **Routes** | Definir endpoints, encadenar middlewares | No contiene lógica de negocio ni acceso a BD |
-| **Middleware** | Validación de inputs, autenticación JWT, autorización por roles | No accede a BD directamente (excepto auth si es necesario) |
-| **Controllers** | Recibir `req`, delegar al service, formatear `res` | No contiene hashing, cálculos, ni envío de emails |
-| **Services** | Lógica de negocio pura: hashing, validaciones complejas, orquestación | No accede a `req` ni `res` — recibe y retorna datos planos |
-| **Models** | Esquema Sequelize, asociaciones, scopes | No contiene lógica de negocio |
+| Capa            | Responsabilidad                                                       | Prohibiciones                                              |
+| --------------- | --------------------------------------------------------------------- | ---------------------------------------------------------- |
+| **Routes**      | Definir endpoints, encadenar middlewares                              | No contiene lógica de negocio ni acceso a BD               |
+| **Middleware**  | Validación de inputs, autenticación JWT, autorización por roles       | No accede a BD directamente (excepto auth si es necesario) |
+| **Controllers** | Recibir `req`, delegar al service, formatear `res`                    | No contiene hashing, cálculos, ni envío de emails          |
+| **Services**    | Lógica de negocio pura: hashing, validaciones complejas, orquestación | No accede a `req` ni `res` — recibe y retorna datos planos |
+| **Models**      | Esquema Sequelize, asociaciones, scopes                               | No contiene lógica de negocio                              |
 
 **Ejemplo — Flujo de registro:**
 
@@ -405,8 +407,8 @@ POST /api/usuarios
 **Autenticación** — El middleware `src/Middleware/auth.ts` ya existe y debe aplicarse a toda ruta protegida:
 
 ```typescript
-import { autenticar } from '../Middleware/auth'
-router.get('/perfil', autenticar, UsuarioController.perfil)
+import { autenticar } from '../Middleware/auth';
+router.get('/perfil', autenticar, UsuarioController.perfil);
 ```
 
 El token se envía como `Authorization: Bearer <token>`. El middleware decodifica el JWT y adjunta los datos del usuario en `req.usuario`.
@@ -417,17 +419,19 @@ El token se envía como `Authorization: Bearer <token>`. El middleware decodific
 export const autorizar = (...rolesPermitidos: number[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!rolesPermitidos.includes(req.usuario.role)) {
-      return res.status(403).json({ msg: 'No tiene permisos para esta accion' })
+      return res
+        .status(403)
+        .json({ msg: 'No tiene permisos para esta accion' });
     }
-    next()
-  }
-}
+    next();
+  };
+};
 ```
 
 **Uso combinado:**
 
 ```typescript
-router.delete('/:id', autenticar, autorizar(1), UsuarioController.eliminar)
+router.delete('/:id', autenticar, autorizar(1), UsuarioController.eliminar);
 // Solo usuarios con role 1 (admin) pueden eliminar
 ```
 
@@ -448,15 +452,18 @@ Dos entidades principales independientes. La relación entre ambas es opcional.
 ```typescript
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn()        id: number
-  @Column({ unique: true })        email: string
-  @Column()                        nombre: string
-  @Column()                        password: string        // bcrypt
-  @Column({ type: 'enum', enum: ['superadmin','admin','secretario','tesorero'] })
-                                   rol: string
-  @Column({ default: true })       activo: boolean
-  @CreateDateColumn()              createdAt: Date
-  @UpdateDateColumn()              updatedAt: Date
+  @PrimaryGeneratedColumn() id: number;
+  @Column({ unique: true }) email: string;
+  @Column() nombre: string;
+  @Column() password: string; // bcrypt
+  @Column({
+    type: 'enum',
+    enum: ['superadmin', 'admin', 'secretario', 'tesorero'],
+  })
+  rol: string;
+  @Column({ default: true }) activo: boolean;
+  @CreateDateColumn() createdAt: Date;
+  @UpdateDateColumn() updatedAt: Date;
 }
 ```
 
@@ -465,29 +472,30 @@ export class User {
 ```typescript
 @Entity('members')
 export class Member {
-  @PrimaryGeneratedColumn('uuid')  id: string
-  @Column({ unique: true })        rut: string
-  @Column()                        nombre: string
-  @Column()                        apellido: string
-  @Column({ nullable: true })      email: string
-  @Column({ nullable: true })      telefono: string
-  @Column()                        region: string
-  @Column({ nullable: true })      comuna: string
-  @Column()                        anioNacimiento: number
-  @Column({ nullable: true })      sexo: string
-  @Column()                        tipoAtaxiaId: number
-  @Column({ type: 'enum', enum: ['activo','inactivo','pendiente'] })
-                                   estado: string
-  @Column({ default: true })       consentimientoAlmacenamiento: boolean
-  @Column({ default: false })      consentimientoEstadisticas: boolean
-  @Column({ nullable: true })      fechaConsentimiento: Date
-  @Column()                        fechaIngreso: Date
-  @Column({ default: true })       isActive: boolean
-  @CreateDateColumn()              createdAt: Date
-  @UpdateDateColumn()              updatedAt: Date
+  @PrimaryGeneratedColumn('uuid') id: string;
+  @Column({ unique: true }) rut: string;
+  @Column() nombre: string;
+  @Column() apellido: string;
+  @Column({ nullable: true }) email: string;
+  @Column({ nullable: true }) telefono: string;
+  @Column({ nullable: true }) direccion: string;
+  @Column() region: string;
+  @Column({ nullable: true }) comuna: string;
+  @Column() fechaNacimiento: Date;
+  @Column({ nullable: true }) sexo: string;
+  @Column() tipoAtaxiaId: number;
+  @Column({ type: 'enum', enum: ['activo', 'inactivo', 'pendiente'] })
+  estado: string;
+  @Column({ default: true }) consentimientoAlmacenamiento: boolean;
+  @Column({ default: false }) consentimientoEstadisticas: boolean;
+  @Column({ nullable: true }) fechaConsentimiento: Date;
+  @Column() fechaIngreso: Date;
+  @Column({ default: true }) isActive: boolean;
+  @CreateDateColumn() createdAt: Date;
+  @UpdateDateColumn() updatedAt: Date;
 
   // Relación opcional: un miembro puede tener cuenta administrativa
-  @Column({ nullable: true })      userId: number
+  @Column({ nullable: true }) userId: number;
 }
 ```
 
@@ -509,38 +517,40 @@ src/Validators/
 
 ```typescript
 // src/Validators/usuario.validator.ts
-import { check } from 'express-validator'
+import { check } from 'express-validator';
 
 export const registroValidator = [
   check('nombre', 'El nombre es obligatorio').not().isEmpty().trim().escape(),
   check('email', 'Agregue un email valido').isEmail().normalizeEmail(),
-  check('password', 'La contrasena debe ser al menos 6 caracteres').isLength({ min: 6 })
-]
+  check('password', 'La contrasena debe ser al menos 6 caracteres').isLength({
+    min: 6,
+  }),
+];
 ```
 
 **Middleware reutilizable para extraer errores:**
 
 ```typescript
 // src/Middleware/validate.ts
-import { validationResult } from 'express-validator'
-import { Request, Response, NextFunction } from 'express'
+import { validationResult } from 'express-validator';
+import { Request, Response, NextFunction } from 'express';
 
 export const validar = (req: Request, res: Response, next: NextFunction) => {
-  const errores = validationResult(req)
+  const errores = validationResult(req);
   if (!errores.isEmpty()) {
-    return res.status(400).json({ errores: errores.array() })
+    return res.status(400).json({ errores: errores.array() });
   }
-  next()
-}
+  next();
+};
 ```
 
 **Uso en rutas:**
 
 ```typescript
-import { registroValidator } from '../Validators/usuario.validator'
-import { validar } from '../Middleware/validate'
+import { registroValidator } from '../Validators/usuario.validator';
+import { validar } from '../Middleware/validate';
 
-router.post('/', registroValidator, validar, UsuarioController.nuevaCuenta)
+router.post('/', registroValidator, validar, UsuarioController.nuevaCuenta);
 ```
 
 **Reglas:**
@@ -604,19 +614,19 @@ Todas las respuestas de la API deben seguir este formato:
 
 ## 26. Seguridad Técnica
 
-| Medida | Implementación |
-|---|---|
-| **Headers HTTP seguros** | Instalar `helmet` y agregar `this.app.use(helmet())` en middleware |
-| **Rate limiting** | Instalar `express-rate-limit`, aplicar en `/api/auth` (max 10 intentos / 15 min) y `/api/usuarios` (max 5 registros / hora por IP) |
-| **Sanitización de inputs** | Toda validación con express-validator debe incluir `trim()`, `escape()`, `normalizeEmail()` |
-| **CORS restrictivo** | Mantener `origin` limitado a `FRONTEND_URL`; nunca usar `origin: '*'` en producción |
-| **Secrets** | Solo en `.env`, sin fallbacks hardcodeados. App debe fallar al inicio si faltan variables críticas |
-| **Passwords** | bcrypt con mínimo 10 rounds. Nunca almacenar ni loguear passwords en texto plano |
-| **JWT** | Incluir solo datos mínimos en payload (id, role). No incluir password ni datos sensibles |
-| **Refresh tokens** | Implementar tokens de refresco seguros |
-| **Protección contra inyección** | SQL Injection vía Sequelize ORM, XSS vía sanitización de inputs |
-| **Migraciones** | Usar `sequelize-cli` para cambios de esquema. Nunca `sequelize.sync({ force: true })` en producción |
-| **Identificador de correlación** | Incluir ID de correlación en errores internos para trazabilidad |
+| Medida                           | Implementación                                                                                                                     |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Headers HTTP seguros**         | Instalar `helmet` y agregar `this.app.use(helmet())` en middleware                                                                 |
+| **Rate limiting**                | Instalar `express-rate-limit`, aplicar en `/api/auth` (max 10 intentos / 15 min) y `/api/usuarios` (max 5 registros / hora por IP) |
+| **Sanitización de inputs**       | Toda validación con express-validator debe incluir `trim()`, `escape()`, `normalizeEmail()`                                        |
+| **CORS restrictivo**             | Mantener `origin` limitado a `FRONTEND_URL`; nunca usar `origin: '*'` en producción                                                |
+| **Secrets**                      | Solo en `.env`, sin fallbacks hardcodeados. App debe fallar al inicio si faltan variables críticas                                 |
+| **Passwords**                    | bcrypt con mínimo 10 rounds. Nunca almacenar ni loguear passwords en texto plano                                                   |
+| **JWT**                          | Incluir solo datos mínimos en payload (id, role). No incluir password ni datos sensibles                                           |
+| **Refresh tokens**               | Implementar tokens de refresco seguros                                                                                             |
+| **Protección contra inyección**  | SQL Injection vía Sequelize ORM, XSS vía sanitización de inputs                                                                    |
+| **Migraciones**                  | Usar `sequelize-cli` para cambios de esquema. Nunca `sequelize.sync({ force: true })` en producción                                |
+| **Identificador de correlación** | Incluir ID de correlación en errores internos para trazabilidad                                                                    |
 
 ---
 
@@ -642,13 +652,13 @@ Todas las respuestas de la API deben seguir este formato:
 
 ## 28. TypeScript Estricto
 
-| Regla | Detalle |
-|---|---|
-| **Prohibir `any`** | Toda función debe tipar sus parámetros y retorno. Usar interfaces definidas en `src/Interfaces/` |
-| **Interfaces por dominio** | Un archivo de interfaces por entidad: `Usuario.ts`, `Auth.ts`, etc. |
-| **Request tipados** | Crear interfaces para bodies de request: `IRegistroBody`, `ILoginBody` |
-| **Configuración TSConfig** | Activar `noUnusedLocals`, `noUnusedParameters`, `noImplicitAny` |
-| **Versión** | Actualizar TypeScript de 3.9.7 a 5.x para acceder a tipos modernos de Sequelize |
+| Regla                      | Detalle                                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------------------------ |
+| **Prohibir `any`**         | Toda función debe tipar sus parámetros y retorno. Usar interfaces definidas en `src/Interfaces/` |
+| **Interfaces por dominio** | Un archivo de interfaces por entidad: `Usuario.ts`, `Auth.ts`, etc.                              |
+| **Request tipados**        | Crear interfaces para bodies de request: `IRegistroBody`, `ILoginBody`                           |
+| **Configuración TSConfig** | Activar `noUnusedLocals`, `noUnusedParameters`, `noImplicitAny`                                  |
+| **Versión**                | Actualizar TypeScript de 3.9.7 a 5.x para acceder a tipos modernos de Sequelize                  |
 
 **Ejemplo de tipado correcto:**
 
@@ -753,13 +763,13 @@ src/
 
 ## 30. Calidad y Herramientas
 
-| Herramienta | Propósito | Configuración |
-|---|---|---|
-| **ESLint** + `@typescript-eslint` | Detectar errores, prohibir `any`, enforcar convenciones | `.eslintrc.json` en raíz |
-| **Prettier** | Formato automático consistente | `.prettierrc` en raíz |
-| **Jest** + `ts-jest` | Tests unitarios para services y libs | `jest.config.ts`, carpeta `__tests__/` |
-| **Supertest** | Tests de integración para endpoints | Dentro de `__tests__/integration/` |
-| **Husky** + `lint-staged` | Pre-commit hooks: lint + format antes de cada commit | `.husky/` |
+| Herramienta                       | Propósito                                               | Configuración                          |
+| --------------------------------- | ------------------------------------------------------- | -------------------------------------- |
+| **ESLint** + `@typescript-eslint` | Detectar errores, prohibir `any`, enforcar convenciones | `.eslintrc.json` en raíz               |
+| **Prettier**                      | Formato automático consistente                          | `.prettierrc` en raíz                  |
+| **Jest** + `ts-jest`              | Tests unitarios para services y libs                    | `jest.config.ts`, carpeta `__tests__/` |
+| **Supertest**                     | Tests de integración para endpoints                     | Dentro de `__tests__/integration/`     |
+| **Husky** + `lint-staged`         | Pre-commit hooks: lint + format antes de cada commit    | `.husky/`                              |
 
 **Scripts sugeridos para `package.json`:**
 
