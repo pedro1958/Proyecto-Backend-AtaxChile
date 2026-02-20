@@ -14,6 +14,7 @@ import {
 import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { UsersService } from './users.service'
+import { Public } from '../auth/decorators/public.decorator'
 
 @Controller('users')
 export class UsersController {
@@ -26,6 +27,7 @@ export class UsersController {
   }
 
   // público — llamado desde el enlace del correo
+  @Public()
   @Get('activar/:token')
   activarCuenta(@Param('token') token: string) {
     return this.usersService.activarCuenta(token)
@@ -37,7 +39,8 @@ export class UsersController {
     return this.usersService.findOne(id)
   }
 
-  // superadmin
+  // superadmin — registro de nuevo usuario (público para permitir la creación inicial)
+  @Public()
   @Post()
   async create(@Body() dto: CreateUserDto) {
     await this.usersService.create(dto)
