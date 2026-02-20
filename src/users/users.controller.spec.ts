@@ -13,6 +13,8 @@ const mockUser = {
   cuentaActivada: false,
   tokenActivacion: null,
   tokenExpiracion: null,
+  resetPasswordToken: null,
+  resetPasswordExpires: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 }

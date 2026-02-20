@@ -85,6 +85,42 @@ export class UsersService {
     await this.usersRepository.save(usuario);
   }
 
+  async solicitarRecuperacion(email: string): Promise<void> {
+    const usuario = await this.usersRepository.findOneBy({ email });
+    // Respuesta silenciosa: no revelar si el email existe o no
+    if (!usuario || !usuario.activo || !usuario.cuentaActivada) return;
+
+    const token = randomUUID();
+    const expiracion = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+
+    usuario.resetPasswordToken = token;
+    usuario.resetPasswordExpires = expiracion;
+    await this.usersRepository.save(usuario);
+    await this.mailerService.enviarRecuperacion(email, token);
+  }
+
+  async restablecerPassword(
+    token: string,
+    nuevaPassword: string,
+  ): Promise<void> {
+    const usuario = await this.usersRepository.findOneBy({
+      resetPasswordToken: token,
+    });
+    if (!usuario) throw new BadRequestException('Token inválido o expirado');
+
+    if (
+      !usuario.resetPasswordExpires ||
+      usuario.resetPasswordExpires < new Date()
+    ) {
+      throw new BadRequestException('Token inválido o expirado');
+    }
+
+    usuario.password = await bcrypt.hash(nuevaPassword, 10);
+    usuario.resetPasswordToken = null;
+    usuario.resetPasswordExpires = null;
+    await this.usersRepository.save(usuario);
+  }
+
   async activarCuenta(token: string): Promise<void> {
     const usuario = await this.usersRepository.findOneBy({
       tokenActivacion: token,

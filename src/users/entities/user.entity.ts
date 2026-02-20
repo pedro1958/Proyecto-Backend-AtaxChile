@@ -42,6 +42,12 @@ export class User {
   @Column({ type: 'datetime', nullable: true })
   tokenExpiracion: Date | null
 
+  @Column({ type: 'varchar', nullable: true })
+  resetPasswordToken: string | null
+
+  @Column({ type: 'datetime', nullable: true })
+  resetPasswordExpires: Date | null
+
   @CreateDateColumn()
   createdAt: Date
 

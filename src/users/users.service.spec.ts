@@ -22,6 +22,8 @@ const mockUser: User = {
   cuentaActivada: false,
   tokenActivacion: 'token-uuid-123',
   tokenExpiracion: new Date(Date.now() + 24 * 60 * 60 * 1000),
+  resetPasswordToken: null,
+  resetPasswordExpires: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 }
@@ -55,6 +57,7 @@ describe('UsersService', () => {
           provide: MailerService,
           useValue: {
             enviarActivacion: jest.fn().mockResolvedValue(undefined),
+            enviarRecuperacion: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],
@@ -199,6 +202,113 @@ describe('UsersService', () => {
       repo.findOneBy.mockResolvedValue(null)
 
       await expect(service.remove(99)).rejects.toThrow(NotFoundException)
+    })
+  })
+
+  describe('solicitarRecuperacion', () => {
+    it('debe guardar token y enviar correo si el usuario existe y está activo', async () => {
+      const usuarioActivo = { ...mockUser, cuentaActivada: true }
+      repo.findOneBy.mockResolvedValue(usuarioActivo)
+      repo.save.mockResolvedValue(usuarioActivo)
+
+      await service.solicitarRecuperacion('admin@test.cl')
+
+      expect(repo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          resetPasswordToken: expect.any(String),
+          resetPasswordExpires: expect.any(Date),
+        }),
+      )
+      expect(mailerService.enviarRecuperacion).toHaveBeenCalledWith(
+        'admin@test.cl',
+        expect.any(String),
+      )
+    })
+
+    it('debe retornar sin hacer nada si el usuario no existe', async () => {
+      repo.findOneBy.mockResolvedValue(null)
+
+      await service.solicitarRecuperacion('noexiste@test.cl')
+
+      expect(repo.save).not.toHaveBeenCalled()
+      expect(mailerService.enviarRecuperacion).not.toHaveBeenCalled()
+    })
+
+    it('debe retornar sin hacer nada si la cuenta no está activada', async () => {
+      repo.findOneBy.mockResolvedValue({ ...mockUser, cuentaActivada: false })
+
+      await service.solicitarRecuperacion('admin@test.cl')
+
+      expect(repo.save).not.toHaveBeenCalled()
+      expect(mailerService.enviarRecuperacion).not.toHaveBeenCalled()
+    })
+
+    it('debe retornar sin hacer nada si la cuenta está inactiva', async () => {
+      repo.findOneBy.mockResolvedValue({ ...mockUser, activo: false })
+
+      await service.solicitarRecuperacion('admin@test.cl')
+
+      expect(repo.save).not.toHaveBeenCalled()
+      expect(mailerService.enviarRecuperacion).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('restablecerPassword', () => {
+    it('debe actualizar el password y limpiar el token', async () => {
+      const usuarioConToken = {
+        ...mockUser,
+        resetPasswordToken: 'token-reset-123',
+        resetPasswordExpires: new Date(Date.now() + 3600000),
+      }
+      repo.findOneBy.mockResolvedValue(usuarioConToken)
+      repo.save.mockResolvedValue(usuarioConToken)
+      jest.spyOn(bcrypt, 'hash').mockResolvedValue('nueva-hash' as never)
+
+      await service.restablecerPassword('token-reset-123', 'nuevaPassword123')
+
+      expect(repo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          password: 'nueva-hash',
+          resetPasswordToken: null,
+          resetPasswordExpires: null,
+        }),
+      )
+    })
+
+    it('debe lanzar BadRequestException si el token no existe', async () => {
+      repo.findOneBy.mockResolvedValue(null)
+
+      await expect(
+        service.restablecerPassword('token-invalido', 'nuevaPassword123'),
+      ).rejects.toThrow(BadRequestException)
+    })
+
+    it('debe lanzar BadRequestException si el token ha expirado', async () => {
+      repo.findOneBy.mockResolvedValue({
+        ...mockUser,
+        resetPasswordToken: 'token-reset-123',
+        resetPasswordExpires: new Date(Date.now() - 3600000),
+      })
+
+      await expect(
+        service.restablecerPassword('token-reset-123', 'nuevaPassword123'),
+      ).rejects.toThrow(BadRequestException)
+    })
+
+    it('debe usar el mismo mensaje de error para token inválido y expirado', async () => {
+      repo.findOneBy.mockResolvedValue(null)
+      await expect(
+        service.restablecerPassword('token-invalido', 'pass'),
+      ).rejects.toThrow('Token inválido o expirado')
+
+      repo.findOneBy.mockResolvedValue({
+        ...mockUser,
+        resetPasswordToken: 'token-reset-123',
+        resetPasswordExpires: new Date(Date.now() - 3600000),
+      })
+      await expect(
+        service.restablecerPassword('token-reset-123', 'pass'),
+      ).rejects.toThrow('Token inválido o expirado')
     })
   })
 

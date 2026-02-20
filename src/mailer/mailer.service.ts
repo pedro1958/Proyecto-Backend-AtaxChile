@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Resend } from 'resend'
 import { activacionTemplate } from './templates/activacion.template'
+import { recuperacionTemplate } from './templates/recuperacion.template'
 
 @Injectable()
 export class MailerService {
@@ -29,6 +30,23 @@ export class MailerService {
       to: email,
       subject: 'Activa tu cuenta — AtaxChile',
       html: activacionTemplate(url),
+    })
+  }
+
+  async enviarRecuperacion(email: string, token: string): Promise<void> {
+    const appUrl = this.config.get<string>('APP_URL') ?? 'http://localhost:5000'
+    const url = `${appUrl}/api/v1/auth/reset-password?token=${token}`
+
+    if (!this.resend) {
+      this.logger.log(`[DEV] Enlace de recuperación para ${email}: ${url}`)
+      return
+    }
+
+    await this.resend.emails.send({
+      from: this.config.get<string>('RESEND_FROM') ?? 'onboarding@resend.dev',
+      to: email,
+      subject: 'Recupera tu contraseña — AtaxChile',
+      html: recuperacionTemplate(url),
     })
   }
 }
