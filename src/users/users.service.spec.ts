@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
 import { getRepositoryToken } from '@nestjs/typeorm'
@@ -254,6 +255,47 @@ describe('UsersService', () => {
       repo.findOneBy.mockResolvedValue(null)
 
       await expect(service.remove(99)).rejects.toThrow(NotFoundException)
+    })
+  })
+
+  describe('cambiarPassword', () => {
+    it('debe cambiar la contraseña si la actual es correcta', async () => {
+      repo.findOneBy.mockResolvedValue({ ...mockUser })
+      repo.save.mockResolvedValue({ ...mockUser })
+      jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never)
+      jest.spyOn(bcrypt, 'hash').mockResolvedValue('nueva-hash' as never)
+
+      await service.cambiarPassword(1, 'password123', 'nuevaPassword123')
+
+      expect(repo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ password: 'nueva-hash' }),
+      )
+    })
+
+    it('debe lanzar NotFoundException si el usuario no existe', async () => {
+      repo.findOneBy.mockResolvedValue(null)
+
+      await expect(
+        service.cambiarPassword(99, 'password123', 'nuevaPassword123'),
+      ).rejects.toThrow(NotFoundException)
+    })
+
+    it('debe lanzar UnauthorizedException si la contraseña actual es incorrecta', async () => {
+      repo.findOneBy.mockResolvedValue({ ...mockUser })
+      jest.spyOn(bcrypt, 'compare').mockResolvedValue(false as never)
+
+      await expect(
+        service.cambiarPassword(1, 'incorrecta', 'nuevaPassword123'),
+      ).rejects.toThrow(UnauthorizedException)
+    })
+
+    it('debe lanzar UnauthorizedException con el mensaje correcto', async () => {
+      repo.findOneBy.mockResolvedValue({ ...mockUser })
+      jest.spyOn(bcrypt, 'compare').mockResolvedValue(false as never)
+
+      await expect(
+        service.cambiarPassword(1, 'incorrecta', 'nuevaPassword123'),
+      ).rejects.toThrow('La contraseña actual es incorrecta')
     })
   })
 

@@ -4,7 +4,9 @@ import { UsersService } from '../users/users.service'
 import { LoginDto } from './dto/login.dto'
 import { ForgotPasswordDto } from '../users/dto/forgot-password.dto'
 import { ResetPasswordDto } from '../users/dto/reset-password.dto'
+import { ChangePasswordDto } from './dto/change-password.dto'
 import { Public } from './decorators/public.decorator'
+import { CurrentUser } from './decorators/current-user.decorator'
 
 @Controller('auth')
 export class AuthController {
@@ -37,5 +39,20 @@ export class AuthController {
   async resetPassword(@Body() dto: ResetPasswordDto) {
     await this.usersService.restablecerPassword(dto.token, dto.nuevaPassword)
     return { message: 'Contraseña restablecida correctamente' }
+  }
+
+  // usuario logueado — cambia su propia contraseña conociendo la actual
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  async changePassword(
+    @CurrentUser() user: { id: number },
+    @Body() dto: ChangePasswordDto,
+  ) {
+    await this.usersService.cambiarPassword(
+      user.id,
+      dto.passwordActual,
+      dto.nuevaPassword,
+    )
+    return { message: 'Contraseña cambiada correctamente' }
   }
 }

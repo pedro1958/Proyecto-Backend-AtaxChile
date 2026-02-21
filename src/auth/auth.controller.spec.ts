@@ -5,6 +5,7 @@ import { UsersService } from '../users/users.service'
 import { LoginDto } from './dto/login.dto'
 import { ForgotPasswordDto } from '../users/dto/forgot-password.dto'
 import { ResetPasswordDto } from '../users/dto/reset-password.dto'
+import { ChangePasswordDto } from './dto/change-password.dto'
 
 describe('AuthController', () => {
   let controller: AuthController
@@ -26,6 +27,7 @@ describe('AuthController', () => {
           useValue: {
             solicitarRecuperacion: jest.fn().mockResolvedValue(undefined),
             restablecerPassword: jest.fn().mockResolvedValue(undefined),
+            cambiarPassword: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],
@@ -74,6 +76,30 @@ describe('AuthController', () => {
 
       expect(result).toHaveProperty('message')
       expect(result.message).toContain('Si el correo existe')
+    })
+  })
+
+  describe('changePassword', () => {
+    const mockUser = { id: 1 }
+    const dto: ChangePasswordDto = {
+      passwordActual: 'password123',
+      nuevaPassword: 'nuevaPassword123',
+    }
+
+    it('debe llamar a usersService.cambiarPassword con el id del usuario y el DTO', async () => {
+      await controller.changePassword(mockUser, dto)
+
+      expect(usersService.cambiarPassword).toHaveBeenCalledWith(
+        mockUser.id,
+        dto.passwordActual,
+        dto.nuevaPassword,
+      )
+    })
+
+    it('debe retornar mensaje de confirmación', async () => {
+      const result = await controller.changePassword(mockUser, dto)
+
+      expect(result).toEqual({ message: 'Contraseña cambiada correctamente' })
     })
   })
 
