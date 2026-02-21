@@ -11,6 +11,7 @@ import { randomUUID } from 'crypto';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateRolDto } from './dto/update-rol.dto';
 import { MailerService } from '../mailer/mailer.service';
 
 type UserSinPassword = Omit<User, 'password'>;
@@ -66,6 +67,14 @@ export class UsersService {
     const usuario = await this.usersRepository.findOneBy({ id });
     if (!usuario) throw new NotFoundException('Usuario no encontrado');
     Object.assign(usuario, dto);
+    const actualizado = await this.usersRepository.save(usuario);
+    return this.sinPassword(actualizado);
+  }
+
+  async updateRol(id: number, dto: UpdateRolDto): Promise<UserSinPassword> {
+    const usuario = await this.usersRepository.findOneBy({ id });
+    if (!usuario) throw new NotFoundException('Usuario no encontrado');
+    usuario.rol = dto.rol;
     const actualizado = await this.usersRepository.save(usuario);
     return this.sinPassword(actualizado);
   }

@@ -167,6 +167,29 @@ describe('UsersService', () => {
     })
   })
 
+  describe('updateRol', () => {
+    it('debe actualizar el rol y retornar usuario sin password', async () => {
+      repo.findOneBy.mockResolvedValue({ ...mockUser })
+      repo.save.mockResolvedValue({ ...mockUser, rol: Rol.SECRETARIO })
+
+      const result = await service.updateRol(1, { rol: Rol.SECRETARIO })
+
+      expect(result).not.toHaveProperty('password')
+      expect(result.rol).toBe(Rol.SECRETARIO)
+      expect(repo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ rol: Rol.SECRETARIO }),
+      )
+    })
+
+    it('debe lanzar NotFoundException si el usuario no existe', async () => {
+      repo.findOneBy.mockResolvedValue(null)
+
+      await expect(
+        service.updateRol(99, { rol: Rol.SECRETARIO }),
+      ).rejects.toThrow(NotFoundException)
+    })
+  })
+
   describe('toggleStatus', () => {
     it('debe invertir el campo activo', async () => {
       repo.findOneBy.mockResolvedValue({ ...mockUser, activo: true })

@@ -3,6 +3,7 @@ import { CreateUserDto } from './dto/create-user.dto'
 import { Rol } from './entities/user.entity'
 import { UsersController } from './users.controller'
 import { UsersService } from './users.service'
+import { SelfGuard } from '../auth/guards/self.guard'
 
 const mockUser = {
   id: 1,
@@ -34,6 +35,9 @@ describe('UsersController', () => {
             findOne: jest.fn().mockResolvedValue(mockUser),
             create: jest.fn().mockResolvedValue(mockUser),
             update: jest.fn().mockResolvedValue(mockUser),
+            updateRol: jest
+              .fn()
+              .mockResolvedValue({ ...mockUser, rol: Rol.SECRETARIO }),
             toggleStatus: jest
               .fn()
               .mockResolvedValue({ ...mockUser, activo: false }),
@@ -42,7 +46,10 @@ describe('UsersController', () => {
           },
         },
       ],
-    }).compile()
+    })
+      .overrideGuard(SelfGuard)
+      .useValue({ canActivate: () => true })
+      .compile()
 
     controller = module.get<UsersController>(UsersController)
     service = module.get(UsersService)
@@ -87,6 +94,18 @@ describe('UsersController', () => {
     it('debe llamar a service.update con id y DTO', async () => {
       await controller.update(1, { nombre: 'Nuevo Nombre' })
       expect(service.update).toHaveBeenCalledWith(1, { nombre: 'Nuevo Nombre' })
+    })
+  })
+
+  describe('updateRol', () => {
+    it('debe llamar a service.updateRol con id y DTO', async () => {
+      await controller.updateRol(1, { rol: Rol.SECRETARIO })
+      expect(service.updateRol).toHaveBeenCalledWith(1, { rol: Rol.SECRETARIO })
+    })
+
+    it('debe retornar el usuario con el rol actualizado', async () => {
+      const result = await controller.updateRol(1, { rol: Rol.SECRETARIO })
+      expect(result.rol).toBe(Rol.SECRETARIO)
     })
   })
 

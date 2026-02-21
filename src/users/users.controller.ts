@@ -10,11 +10,16 @@ import {
   Patch,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateRolDto } from './dto/update-rol.dto';
 import { UsersService } from './users.service';
 import { Public } from '../auth/decorators/public.decorator';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { SelfGuard } from '../auth/guards/self.guard';
+import { Rol } from './entities/user.entity';
 
 @Controller('users')
 export class UsersController {
@@ -49,10 +54,21 @@ export class UsersController {
     };
   }
 
-  // superadmin
+  // usuario logueado — solo puede modificar sus propios datos
   @Put(':id')
+  @UseGuards(SelfGuard)
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto) {
     return this.usersService.update(id, dto);
+  }
+
+  // superadmin — cambio de rol
+  @Patch(':id/rol')
+  @Roles(Rol.SUPERADMIN)
+  updateRol(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateRolDto,
+  ) {
+    return this.usersService.updateRol(id, dto);
   }
 
   // superadmin
