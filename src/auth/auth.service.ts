@@ -24,7 +24,7 @@ export class AuthService {
     if (!passwordValido)
       throw new UnauthorizedException('Credenciales inválidas')
 
-    const payload = { sub: usuario.id, email: usuario.email, rol: usuario.rol }
+    const payload = { sub: usuario.id }
     return { access_token: this.jwtService.sign(payload) }
   }
 }

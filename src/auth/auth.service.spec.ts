@@ -65,11 +65,7 @@ describe('AuthService', () => {
       const result = await service.login(loginDto)
 
       expect(result).toEqual({ access_token: 'fake-jwt-token' })
-      expect(jwtService.sign).toHaveBeenCalledWith({
-        sub: mockUser.id,
-        email: mockUser.email,
-        rol: mockUser.rol,
-      })
+      expect(jwtService.sign).toHaveBeenCalledWith({ sub: mockUser.id })
     })
 
     it('debe lanzar UnauthorizedException si el usuario no existe', async () => {
