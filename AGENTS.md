@@ -49,7 +49,8 @@ src/
 ├── app.module.ts         # Módulo raíz
 ├── auth/                 # Autenticación JWT + guards de roles
 ├── users/                # Usuarios administrativos (staff/directivos)
-├── members/              # Socios de la agrupación
+├── geo/                  # Datos de referencia: regiones y comunas de Chile
+├── members/              # Socios de la agrupación (referencia comunaId)
 ├── ataxia-types/         # Catálogo controlado de tipos de ataxia
 ├── stats/                # Estadísticas agregadas
 ├── audit/                # Registro de auditoría inmutable
@@ -69,6 +70,8 @@ Controller → Service → Repository (TypeORM Entity)
 - **Petición**: Controller (guards + pipes) → Service → TypeORM Repository
 - **Autenticación**: `Authorization: Bearer <token>` → `JwtAuthGuard` → `RolesGuard` → Controller
 - **Base URL**: `/api/v1`
+- **Tokens JWT**: `access_token` (15 min, firmado con `JWT_SECRET`) + `refresh_token` (7 días, firmado con `JWT_REFRESH_SECRET`). El refresh token se almacena hasheado en BD. `JwtStrategy.validate()` consulta la BD en cada request para verificar que el usuario sigue activo.
+- **Geografía**: El módulo `geo` expone regiones y comunas de Chile. Al crear un miembro se envía `comunaId`; la región se obtiene a través de la relación `comuna → region`. Las tablas se pueblan con un seeder al iniciar la app.
 - **Recuperación de contraseña**:
   1. `POST /auth/forgot-password` — recibe `email`; busca el usuario, genera token con `crypto.randomBytes(32)`, almacena el **hash** del token y su expiración (1 hora) en los campos `resetPasswordToken` / `resetPasswordExpires` de la entidad `User`; envía email con enlace al frontend (`/reset-password?token=<token-en-claro>`); responde siempre con mensaje genérico sin confirmar si el email existe (previene enumeración de usuarios).
   2. `POST /auth/reset-password` — recibe `token` + `nuevaPassword`; busca usuario por hash del token y verifica que no haya expirado; hashea la nueva contraseña con bcrypt (10 rounds); limpia `resetPasswordToken` y `resetPasswordExpires`; registra el evento en auditoría.
@@ -81,8 +84,9 @@ Controller → Service → Repository (TypeORM Entity)
 - Controllers y Services son clases NestJS con decoradores (`@Controller`, `@Injectable`).
 - Validación de inputs con `class-validator` en DTOs; aplicado globalmente con `ValidationPipe`.
 - Passwords hasheados con bcrypt (10 rounds mínimo).
-- Los tokens JWT llevan solo datos mínimos (`id`, `email`, `rol`), expiran en 12h.
-- El secreto JWT se valida al iniciar — la app falla si falta la variable de entorno `JWT_SECRET`.
+- Los tokens JWT llevan solo el `id` del usuario (`{ sub: id }`). El `email` y `rol` se obtienen desde BD en cada request vía `JwtStrategy.validate()`.
+- `access_token` expira en 15 min (`JWT_SECRET`). `refresh_token` expira en 7 días (`JWT_REFRESH_SECRET`) y se almacena hasheado en `users.refreshToken`.
+- Los secretos JWT se validan al iniciar — la app falla si faltan `JWT_SECRET` o `JWT_REFRESH_SECRET`.
 - CORS configurado para permitir solo `FRONTEND_URL` desde env.
 - Manejo de errores centralizado con `HttpExceptionFilter` global.
 - Respuestas estandarizadas con `ResponseInterceptor`: `{ success, data, message }`.
@@ -95,8 +99,9 @@ Controller → Service → Repository (TypeORM Entity)
 Requeridas en `.env` (ver `.env.example`):
 
 ```
-JWT_SECRET      # Secreto para firmar JWT (obligatorio al iniciar)
-DB_HOST         # Host de la base de datos
+JWT_SECRET          # Secreto para firmar access tokens (15 min)
+JWT_REFRESH_SECRET  # Secreto para firmar refresh tokens (7 días) — debe ser distinto a JWT_SECRET
+DB_HOST             # Host de la base de datos
 DB_PORT         # Puerto de la base de datos (5432 PostgreSQL)
 DB_USER         # Usuario de la base de datos
 DB_PASSWORD     # Contraseña de la base de datos

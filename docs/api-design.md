@@ -263,26 +263,62 @@ Toda API debe estar versionada.
 
 ## 14. Endpoints de Autenticación
 
-```
-POST /auth/login
-POST /auth/refresh
-POST /auth/logout
-POST /auth/change-password
-```
+| Método | Ruta | Acceso | Descripción |
+| ------ | ---- | ------ | ----------- |
+| `POST` | `/auth/login` | Público | Inicia sesión, retorna `access_token` (15 min) y `refresh_token` (7 días) |
+| `POST` | `/auth/refresh` | Público | Renueva el `access_token` usando el `refresh_token` |
+| `POST` | `/auth/logout` | Autenticado | Invalida el `refresh_token` en BD |
+| `POST` | `/auth/forgot-password` | Público | Solicita recuperación de contraseña por email |
+| `POST` | `/auth/reset-password` | Público | Restablece contraseña con token recibido por email |
+| `POST` | `/auth/change-password` | Autenticado | Cambia contraseña conociendo la actual |
 
 ---
 
 ## 15. Endpoints de Usuarios Administrativos
 
-Acceso restringido: solo `superadmin` puede crear, modificar o desactivar usuarios administrativos.
+| Método | Ruta | Acceso | Descripción |
+| ------ | ---- | ------ | ----------- |
+| `GET` | `/users` | superadmin, admin | Lista todos los usuarios |
+| `GET` | `/users/:id` | Autenticado (propio) | Retorna perfil: `nombre`, `email`, `rol` |
+| `POST` | `/users/register` | Público | Registra nuevo usuario, envía email de activación |
+| `GET` | `/users/activar/:token` | Público | Activa cuenta desde enlace del correo |
+| `PUT` | `/users/:id` | Autenticado (propio) | Modifica `nombre` o `email` — no modifica `rol` |
+| `PATCH` | `/users/:id/rol` | superadmin | Cambia el rol del usuario |
+| `PATCH` | `/users/:id/status` | superadmin | Activa o desactiva la cuenta |
+| `DELETE` | `/users/:id` | superadmin | Eliminación lógica |
+
+---
+
+## 15.5 Endpoints de Geografía (Regiones y Comunas)
+
+Datos de referencia estáticos para Chile. Lectura disponible para cualquier usuario autenticado; escritura solo para `superadmin`.
+
+No se implementa `DELETE` — la eliminación de una región o comuna rompería los registros de miembros existentes. Si se requiere dar de baja una entrada, se aplica `PATCH /:id/status` (mismo patrón que `users`).
+
+### Regiones
+
+| Método | Ruta | Acceso | Descripción |
+| ------ | ---- | ------ | ----------- |
+| `GET` | `/geo/regiones` | Autenticado | Lista todas las regiones |
+| `GET` | `/geo/regiones/:id` | Autenticado | Obtiene una región por id |
+| `POST` | `/geo/regiones` | superadmin | Crea una nueva región |
+| `PUT` | `/geo/regiones/:id` | superadmin | Modifica el nombre de una región |
+
+### Comunas
+
+| Método | Ruta | Acceso | Descripción |
+| ------ | ---- | ------ | ----------- |
+| `GET` | `/geo/regiones/:id/comunas` | Autenticado | Lista comunas de una región |
+| `GET` | `/geo/comunas/:id` | Autenticado | Obtiene una comuna por id |
+| `POST` | `/geo/comunas` | superadmin | Crea una nueva comuna |
+| `PUT` | `/geo/comunas/:id` | superadmin | Modifica nombre o región de una comuna |
+
+### Flujo típico del frontend al crear un miembro
 
 ```
-GET    /users/register            (superadmin, admin)
-GET    /users/{id}                (superadmin, admin)
-POST   /users                     (superadmin)
-PUT    /users/{id}                (superadmin)
-PATCH  /users/{id}/status         (superadmin)
-DELETE /users/{id}                (superadmin) — eliminación lógica
+1. GET /geo/regiones               → carga desplegable de regiones
+2. GET /geo/regiones/:id/comunas   → carga comunas según región seleccionada
+3. POST /miembros  { comunaId }    → guarda el miembro con FK a comuna
 ```
 
 ---
@@ -445,8 +481,6 @@ router.delete('/:id', autenticar, autorizar(1), UsuarioController.eliminar);
 
 ## 23. Entidades y Relaciones (TypeORM)
 
-Dos entidades principales independientes. La relación entre ambas es opcional.
-
 **`User`** — usuarios administrativos del sistema:
 
 ```typescript
@@ -467,7 +501,33 @@ export class User {
 }
 ```
 
-**`Member`** — socios de la agrupación:
+**`Region`** — regiones de Chile (datos de referencia):
+
+```typescript
+@Entity('regiones')
+export class Region {
+  @PrimaryGeneratedColumn() id: number;
+  @Column({ unique: true }) nombre: string;
+  @OneToMany(() => Comuna, (comuna) => comuna.region)
+  comunas: Comuna[];
+}
+```
+
+**`Comuna`** — comunas de Chile, cada una pertenece a una región:
+
+```typescript
+@Entity('comunas')
+export class Comuna {
+  @PrimaryGeneratedColumn() id: number;
+  @Column() nombre: string;
+  @Column() regionId: number;
+  @ManyToOne(() => Region, (region) => region.comunas)
+  @JoinColumn({ name: 'regionId' })
+  region: Region;
+}
+```
+
+**`Member`** — socios de la agrupación, referencia `comunaId` como FK:
 
 ```typescript
 @Entity('members')
@@ -479,8 +539,10 @@ export class Member {
   @Column({ nullable: true }) email: string;
   @Column({ nullable: true }) telefono: string;
   @Column({ nullable: true }) direccion: string;
-  @Column() region: string;
-  @Column({ nullable: true }) comuna: string;
+  @Column() comunaId: number;
+  @ManyToOne(() => Comuna)
+  @JoinColumn({ name: 'comunaId' })
+  comuna: Comuna;
   @Column() fechaNacimiento: Date;
   @Column({ nullable: true }) sexo: string;
   @Column() tipoAtaxiaId: number;
@@ -499,7 +561,11 @@ export class Member {
 }
 ```
 
-**Regla:** Las tablas `users` y `members` son independientes. No usar herencia ni tabla única. La FK `userId` en `members` es opcional y solo se asigna cuando un socio también opera el sistema.
+**Reglas:**
+- Las tablas `users` y `members` son independientes. No usar herencia ni tabla única.
+- `members.comunaId` referencia a `comunas.id` — la región se obtiene a través de la relación `comuna → region`.
+- `regiones` y `comunas` se pueblan mediante un seeder al iniciar la app (solo si las tablas están vacías).
+- No se permite eliminación física de regiones ni comunas que tengan miembros asociados.
 
 ---
 
@@ -712,12 +778,21 @@ src/
 │   ├── users.service.ts
 │   └── users.module.ts
 │
+├── geo/                            # Datos de referencia geográfica (regiones y comunas)
+│   ├── entities/
+│   │   ├── region.entity.ts        # Region: id, nombre, OneToMany comunas
+│   │   └── comuna.entity.ts        # Comuna: id, nombre, regionId (FK)
+│   ├── geo.controller.ts           # GET /geo/regiones, GET /geo/regiones/:id/comunas, etc.
+│   ├── geo.service.ts              # findAllRegiones, findComunasByRegion, create, update
+│   ├── geo.seeder.ts               # Puebla regiones y comunas al iniciar si las tablas están vacías
+│   └── geo.module.ts
+│
 ├── members/                        # Socios de la agrupación
 │   ├── dto/
-│   │   ├── create-member.dto.ts
+│   │   ├── create-member.dto.ts    # Incluye comunaId (FK)
 │   │   └── update-member.dto.ts
 │   ├── entities/
-│   │   └── member.entity.ts        # Entidad TypeORM: rut, nombre, tipoAtaxia, estado, etc.
+│   │   └── member.entity.ts        # Entidad TypeORM: rut, nombre, comunaId, tipoAtaxia, estado, etc.
 │   ├── members.controller.ts       # Endpoints /members
 │   ├── members.service.ts
 │   └── members.module.ts
