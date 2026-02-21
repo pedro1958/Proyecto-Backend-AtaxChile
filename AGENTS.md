@@ -7,6 +7,7 @@ Este archivo proporciona orientación a agentes de IA (Claude Code, Codex, etc.)
 REST API para AtaxChile construida con **NestJS + TypeScript + TypeORM + PostgreSQL**. Gestiona el registro de miembros de la agrupación, clasificación de tipos de ataxia, estadísticas poblacionales, autenticación y permisos basados en roles.
 
 **Separación de dominios clave:**
+
 - `users` — usuarios administrativos del sistema (staff, directivos). Poseen rol y credenciales de acceso.
 - `members` — socios de la agrupación. Entidad independiente, sin acceso al sistema por defecto.
 
@@ -19,6 +20,7 @@ docs/api-design.md
 ```
 
 Contiene:
+
 - **Parte I**: Políticas de negocio (gestión de miembros, auditoría, RBAC, consentimiento, protección de datos).
 - **Parte II**: Definición completa de la API REST (endpoints, filtros, restricciones por rol).
 - **Parte III**: Políticas de diseño técnico (arquitectura en capas, validación, respuestas estándar, seguridad, TypeScript estricto, estructura de carpetas).
@@ -100,10 +102,9 @@ DB_USER         # Usuario de la base de datos
 DB_PASSWORD     # Contraseña de la base de datos
 DB_NAME         # Nombre de la base de datos
 FRONTEND_URL    # URL del frontend para CORS
-EMAIL_HOST      # Host SMTP
-EMAIL_PORT      # Puerto SMTP
-EMAIL_USER      # Usuario SMTP
-EMAIL_PASS      # Contraseña SMTP
+RESEND_API_KEY  # API key de resend
+RESEND_FROM     # Correo del dominio
+APP_URL         # URL de uso de la app
 ```
 
 ---

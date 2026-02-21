@@ -277,7 +277,7 @@ POST /auth/change-password
 Acceso restringido: solo `superadmin` puede crear, modificar o desactivar usuarios administrativos.
 
 ```
-GET    /users                     (superadmin, admin)
+GET    /users/register            (superadmin, admin)
 GET    /users/{id}                (superadmin, admin)
 POST   /users                     (superadmin)
 PUT    /users/{id}                (superadmin)
