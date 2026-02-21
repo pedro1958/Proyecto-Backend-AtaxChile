@@ -347,13 +347,37 @@ GET /members?active=true
 
 ## 17. Endpoints de Tipos de Ataxia (Catálogo)
 
+El catálogo de tipos de ataxia es una tabla de referencia controlada: solo Administrador puede modificarla; los miembros solo pueden seleccionar desde este listado, sin texto libre.
+
+El campo `estadoDiagnostico` (`confirmado` / `presuntivo` / `en_estudio`) pertenece al **miembro**, no al tipo — es un dato clínico del paciente, no del catálogo.
+
+No se implementa `DELETE` — si un tipo ya tiene miembros asociados, eliminarlo rompería la FK histórica. Se usa `PATCH /:id/status` para desactivarlo.
+
+| Método | Ruta | Acceso | Descripción |
+| ------ | ---- | ------ | ----------- |
+| `GET` | `/ataxia-types` | Autenticado | Lista tipos activos; acepta filtro `?grupo=` |
+| `GET` | `/ataxia-types/:id` | Autenticado | Detalle de un tipo |
+| `POST` | `/ataxia-types` | `superadmin`, `admin` | Crea un tipo en el catálogo |
+| `PATCH` | `/ataxia-types/:id` | `superadmin`, `admin` | Modifica nombre, grupo o descripción |
+| `PATCH` | `/ataxia-types/:id/status` | `superadmin`, `admin` | Activa o desactiva el tipo (soft delete) |
+
+### Grupos de ataxia (`GrupoAtaxia`)
+
+| Valor | Descripción | Ejemplos clínicos |
+|---|---|---|
+| `hereditaria` | Ataxias de origen genético | Friedreich, SCA1–SCA17, Ataxia-Telangiectasia, AOA1, AOA2, ARSACS, AVED |
+| `adquirida` | Ataxias secundarias a causas externas | MSA-C, alcohólica, paraneoplásica, por gluten, inmunomediada, CANVAS |
+| `idiopatica` | Sin causa identificada | SAOA (ataxia cerebelosa de inicio tardío), esporádica no clasificada |
+| `otra` | Otros tipos o en investigación genética | En investigación, origen combinado |
+
+### Flujo típico del frontend al crear un miembro
+
 ```
-GET    /ataxia-types
-GET    /ataxia-types/{id}
-POST   /ataxia-types
-PUT    /ataxia-types/{id}
-PATCH  /ataxia-types/{id}
-DELETE /ataxia-types/{id}   (solo si no existen miembros asociados)
+1. GET /ataxia-types                   → carga dropdown de tipos (agrupados por grupo)
+2. El usuario selecciona:
+   - tipoAtaxiaId  → FK al catálogo (obligatorio)
+   - estadoDiagnostico: 'confirmado' | 'presuntivo' | 'en_estudio'
+3. POST /members { tipoAtaxiaId, estadoDiagnostico, ... }
 ```
 
 ---
@@ -527,9 +551,37 @@ export class Comuna {
 }
 ```
 
-**`Member`** — socios de la agrupación, referencia `comunaId` como FK:
+**`AtaxiaType`** — catálogo controlado de tipos de ataxia:
 
 ```typescript
+export enum GrupoAtaxia {
+  HEREDITARIA = 'hereditaria',
+  ADQUIRIDA   = 'adquirida',
+  IDIOPATICA  = 'idiopatica',
+  OTRA        = 'otra',
+}
+
+@Entity('ataxia_types')
+export class AtaxiaType {
+  @PrimaryGeneratedColumn() id: number;
+  @Column() nombre: string;                          // "Ataxia de Friedreich"
+  @Column({ type: 'varchar' }) grupo: GrupoAtaxia;   // agrupación para dropdowns y estadísticas
+  @Column({ nullable: true }) descripcion: string;   // descripción opcional para el frontend
+  @Column({ default: true }) activo: boolean;        // soft delete — nunca eliminación física
+  @CreateDateColumn() createdAt: Date;
+  @UpdateDateColumn() updatedAt: Date;
+}
+```
+
+**`Member`** — socios de la agrupación, referencia `comunaId` y `tipoAtaxiaId` como FK:
+
+```typescript
+export enum EstadoDiagnostico {
+  CONFIRMADO  = 'confirmado',
+  PRESUNTIVO  = 'presuntivo',
+  EN_ESTUDIO  = 'en_estudio',
+}
+
 @Entity('members')
 export class Member {
   @PrimaryGeneratedColumn('uuid') id: string;
@@ -546,7 +598,12 @@ export class Member {
   @Column() fechaNacimiento: Date;
   @Column({ nullable: true }) sexo: string;
   @Column() tipoAtaxiaId: number;
-  @Column({ type: 'enum', enum: ['activo', 'inactivo', 'pendiente'] })
+  @ManyToOne(() => AtaxiaType)
+  @JoinColumn({ name: 'tipoAtaxiaId' })
+  tipoAtaxia: AtaxiaType;
+  @Column({ type: 'varchar', default: EstadoDiagnostico.EN_ESTUDIO })
+  estadoDiagnostico: EstadoDiagnostico;             // dato del paciente, no del catálogo
+  @Column({ type: 'varchar', enum: ['activo', 'inactivo', 'pendiente'] })
   estado: string;
   @Column({ default: true }) consentimientoAlmacenamiento: boolean;
   @Column({ default: false }) consentimientoEstadisticas: boolean;
@@ -798,9 +855,13 @@ src/
 │   └── members.module.ts
 │
 ├── ataxia-types/                   # Catálogo controlado de tipos de ataxia
+│   ├── dto/
+│   │   ├── create-ataxia-type.dto.ts  # nombre, grupo (GrupoAtaxia), descripcion?
+│   │   └── update-ataxia-type.dto.ts  # PartialType(CreateAtaxiaTypeDto)
 │   ├── entities/
-│   │   └── ataxia-type.entity.ts
-│   ├── ataxia-types.controller.ts
+│   │   └── ataxia-type.entity.ts      # id, nombre, grupo, descripcion, activo
+│   ├── ataxia-types.seeder.ts         # puebla el catálogo inicial si la tabla está vacía
+│   ├── ataxia-types.controller.ts     # GET /ataxia-types, POST, PATCH, PATCH /:id/status
 │   ├── ataxia-types.service.ts
 │   └── ataxia-types.module.ts
 │
