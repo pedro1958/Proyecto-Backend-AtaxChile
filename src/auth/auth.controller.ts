@@ -5,6 +5,7 @@ import { LoginDto } from './dto/login.dto'
 import { ForgotPasswordDto } from '../users/dto/forgot-password.dto'
 import { ResetPasswordDto } from '../users/dto/reset-password.dto'
 import { ChangePasswordDto } from './dto/change-password.dto'
+import { RefreshDto } from './dto/refresh.dto'
 import { Public } from './decorators/public.decorator'
 import { CurrentUser } from './decorators/current-user.decorator'
 
@@ -20,6 +21,19 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto)
+  }
+
+  @Public()
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  refresh(@Body() dto: RefreshDto) {
+    return this.authService.refresh(dto.refresh_token)
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  logout(@CurrentUser() user: { id: number }) {
+    return this.authService.logout(user.id)
   }
 
   @Public()

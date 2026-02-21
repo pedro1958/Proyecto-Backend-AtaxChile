@@ -48,6 +48,12 @@ export class User {
   @Column({ type: 'datetime', nullable: true })
   resetPasswordExpires: Date | null
 
+  @Column({ type: 'varchar', nullable: true })
+  refreshToken: string | null
+
+  @Column({ type: 'datetime', nullable: true })
+  refreshTokenExpires: Date | null
+
   @CreateDateColumn()
   createdAt: Date
 

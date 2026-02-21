@@ -6,6 +6,7 @@ import { LoginDto } from './dto/login.dto'
 import { ForgotPasswordDto } from '../users/dto/forgot-password.dto'
 import { ResetPasswordDto } from '../users/dto/reset-password.dto'
 import { ChangePasswordDto } from './dto/change-password.dto'
+import { RefreshDto } from './dto/refresh.dto'
 
 describe('AuthController', () => {
   let controller: AuthController
@@ -19,7 +20,14 @@ describe('AuthController', () => {
         {
           provide: AuthService,
           useValue: {
-            login: jest.fn().mockResolvedValue({ access_token: 'fake-jwt-token' }),
+            login: jest.fn().mockResolvedValue({
+              access_token: 'fake-access-token',
+              refresh_token: 'fake-refresh-token',
+            }),
+            refresh: jest
+              .fn()
+              .mockResolvedValue({ access_token: 'nuevo-access-token' }),
+            logout: jest.fn().mockResolvedValue(undefined),
           },
         },
         {
@@ -51,31 +59,39 @@ describe('AuthController', () => {
       expect(authService.login).toHaveBeenCalledWith(dto)
     })
 
-    it('debe retornar el access_token generado por el service', async () => {
+    it('debe retornar access_token y refresh_token generados por el service', async () => {
       const dto: LoginDto = { email: 'admin@test.cl', password: 'password123' }
 
       const result = await controller.login(dto)
 
-      expect(result).toEqual({ access_token: 'fake-jwt-token' })
+      expect(result).toEqual({
+        access_token: 'fake-access-token',
+        refresh_token: 'fake-refresh-token',
+      })
     })
   })
 
-  describe('forgotPassword', () => {
-    it('debe llamar a usersService.solicitarRecuperacion con el email', async () => {
-      const dto: ForgotPasswordDto = { email: 'admin@test.cl' }
+  describe('refresh', () => {
+    const dto: RefreshDto = { refresh_token: 'valid-refresh-token' }
 
-      await controller.forgotPassword(dto)
+    it('debe llamar a authService.refresh con el token del DTO', async () => {
+      await controller.refresh(dto)
 
-      expect(usersService.solicitarRecuperacion).toHaveBeenCalledWith(dto.email)
+      expect(authService.refresh).toHaveBeenCalledWith(dto.refresh_token)
     })
 
-    it('debe retornar mensaje genérico sin importar si el email existe', async () => {
-      const dto: ForgotPasswordDto = { email: 'noexiste@test.cl' }
+    it('debe retornar el nuevo access_token', async () => {
+      const result = await controller.refresh(dto)
 
-      const result = await controller.forgotPassword(dto)
+      expect(result).toEqual({ access_token: 'nuevo-access-token' })
+    })
+  })
 
-      expect(result).toHaveProperty('message')
-      expect(result.message).toContain('Si el correo existe')
+  describe('logout', () => {
+    it('debe llamar a authService.logout con el id del usuario', async () => {
+      await controller.logout({ id: 1 })
+
+      expect(authService.logout).toHaveBeenCalledWith(1)
     })
   })
 
@@ -100,6 +116,25 @@ describe('AuthController', () => {
       const result = await controller.changePassword(mockUser, dto)
 
       expect(result).toEqual({ message: 'Contraseña cambiada correctamente' })
+    })
+  })
+
+  describe('forgotPassword', () => {
+    it('debe llamar a usersService.solicitarRecuperacion con el email', async () => {
+      const dto: ForgotPasswordDto = { email: 'admin@test.cl' }
+
+      await controller.forgotPassword(dto)
+
+      expect(usersService.solicitarRecuperacion).toHaveBeenCalledWith(dto.email)
+    })
+
+    it('debe retornar mensaje genérico sin importar si el email existe', async () => {
+      const dto: ForgotPasswordDto = { email: 'noexiste@test.cl' }
+
+      const result = await controller.forgotPassword(dto)
+
+      expect(result).toHaveProperty('message')
+      expect(result.message).toContain('Si el correo existe')
     })
   })
 
