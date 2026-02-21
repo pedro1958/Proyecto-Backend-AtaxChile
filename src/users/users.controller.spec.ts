@@ -32,7 +32,11 @@ describe('UsersController', () => {
           provide: UsersService,
           useValue: {
             findAll: jest.fn().mockResolvedValue([mockUser]),
-            findOne: jest.fn().mockResolvedValue(mockUser),
+            findPerfil: jest.fn().mockResolvedValue({
+              nombre: mockUser.nombre,
+              email: mockUser.email,
+              rol: mockUser.rol,
+            }),
             create: jest.fn().mockResolvedValue(mockUser),
             update: jest.fn().mockResolvedValue(mockUser),
             updateRol: jest
@@ -68,10 +72,14 @@ describe('UsersController', () => {
   })
 
   describe('findOne', () => {
-    it('debe llamar a service.findOne con el id correcto', async () => {
+    it('debe llamar a service.findPerfil con el id correcto', async () => {
       const result = await controller.findOne(1)
-      expect(service.findOne).toHaveBeenCalledWith(1)
-      expect(result.id).toBe(1)
+      expect(service.findPerfil).toHaveBeenCalledWith(1)
+      expect(result).toEqual({
+        nombre: mockUser.nombre,
+        email: mockUser.email,
+        rol: mockUser.rol,
+      })
     })
   })
 

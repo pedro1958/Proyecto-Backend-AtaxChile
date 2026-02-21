@@ -147,6 +147,35 @@ describe('UsersService', () => {
     })
   })
 
+  describe('findPerfil', () => {
+    it('debe retornar solo nombre, email y rol', async () => {
+      repo.findOneBy.mockResolvedValue(mockUser)
+      repo.find.mockResolvedValue([mockUser])
+
+      const mockFindOne = jest.fn().mockResolvedValue(mockUser)
+      ;(repo as any).findOne = mockFindOne
+
+      const result = await service.findPerfil(1)
+
+      expect(result).toEqual({
+        nombre: mockUser.nombre,
+        email: mockUser.email,
+        rol: mockUser.rol,
+      })
+      expect(result).not.toHaveProperty('password')
+      expect(result).not.toHaveProperty('activo')
+      expect(result).not.toHaveProperty('cuentaActivada')
+      expect(result).not.toHaveProperty('createdAt')
+    })
+
+    it('debe lanzar NotFoundException si el usuario no existe', async () => {
+      const mockFindOne = jest.fn().mockResolvedValue(null)
+      ;(repo as any).findOne = mockFindOne
+
+      await expect(service.findPerfil(99)).rejects.toThrow(NotFoundException)
+    })
+  })
+
   describe('update', () => {
     it('debe actualizar usuario y retornarlo sin password', async () => {
       repo.findOneBy.mockResolvedValue({ ...mockUser })

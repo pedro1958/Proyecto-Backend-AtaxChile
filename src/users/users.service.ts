@@ -15,6 +15,7 @@ import { UpdateRolDto } from './dto/update-rol.dto';
 import { MailerService } from '../mailer/mailer.service';
 
 type UserSinPassword = Omit<User, 'password'>;
+type PerfilUsuario = Pick<User, 'nombre' | 'email' | 'rol'>;
 
 @Injectable()
 export class UsersService {
@@ -61,6 +62,15 @@ export class UsersService {
     const usuario = await this.usersRepository.findOneBy({ id });
     if (!usuario) throw new NotFoundException('Usuario no encontrado');
     return this.sinPassword(usuario);
+  }
+
+  async findPerfil(id: number): Promise<PerfilUsuario> {
+    const usuario = await this.usersRepository.findOne({
+      where: { id },
+      select: { nombre: true, email: true, rol: true },
+    });
+    if (!usuario) throw new NotFoundException('Usuario no encontrado');
+    return { nombre: usuario.nombre, email: usuario.email, rol: usuario.rol };
   }
 
   async update(id: number, dto: UpdateUserDto): Promise<UserSinPassword> {

@@ -38,10 +38,11 @@ export class UsersController {
     return this.usersService.activarCuenta(token);
   }
 
-  // superadmin, admin
+  // usuario logueado — solo puede ver su propio perfil
   @Get(':id')
+  @UseGuards(SelfGuard)
   findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.findOne(id);
+    return this.usersService.findPerfil(id);
   }
 
   // superadmin — registro de nuevo usuario (público para permitir la creación inicial)
