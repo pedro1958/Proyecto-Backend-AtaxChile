@@ -6,6 +6,7 @@ import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { UsersModule } from './users/users.module'
 import { AuthModule } from './auth/auth.module'
+import { GeoModule } from './geo/geo.module'
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard'
 import { RolesGuard } from './auth/guards/roles.guard'
 
@@ -42,6 +43,7 @@ import { RolesGuard } from './auth/guards/roles.guard'
     }),
     UsersModule,
     AuthModule,
+    GeoModule,
   ],
   controllers: [AppController],
   providers: [
