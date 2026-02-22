@@ -63,20 +63,35 @@ Cada miembro debe:
 
 - Tener identificador único (UUID).
 - No estar duplicado según documento de identidad.
-- Contar con los siguientes campos obligatorios:
-  - Nombre completo.
-  - Documento de identidad.
+- Declarar si es **paciente** (tiene ataxia) o **representante** (familiar, tutor o cuidador de una persona con ataxia). El campo `esRepresentante` determina qué campos son obligatorios.
+
+**Campos obligatorios para paciente** (`esRepresentante: false`):
+  - Nombre completo y apellido.
+  - RUT (formato `"12345678-9"`).
   - Fecha de nacimiento.
-  - Región.
-  - Tipo de ataxia.
+  - Región / comuna.
+  - Tipo de ataxia (`tipoAtaxiaId`).
+  - Estado diagnóstico.
   - Consentimiento registrado.
+
+**Campos obligatorios para representante** (`esRepresentante: true`):
+  - Nombre completo y apellido.
+  - RUT (formato `"12345678-9"`).
+  - Fecha de nacimiento.
+  - Región / comuna.
+  - Tipo de representación (`tipoRepresentacion`).
+  - Consentimiento registrado.
+  - Al menos uno de:
+    - `representadoId` — UUID de la persona representada si ya está registrada en el sistema.
+    - `representadoNombre` + `representadoRut` — si la persona representada aún no está registrada.
 
 Validaciones obligatorias en backend:
 
-- Documento con formato válido.
-- Normalización de texto.
-- Validación de campos obligatorios.
-- Prevención de duplicados.
+- RUT con formato y dígito verificador válidos (algoritmo de validación chileno).
+- Normalización de texto (trim, mayúsculas consistentes).
+- Prevención de duplicados por RUT.
+- Si `esRepresentante: true`: `tipoAtaxiaId` y `estadoDiagnostico` deben ser `null`.
+- Si `esRepresentante: true` y se informa `representadoId`: verificar que ese UUID exista en `members`.
 
 ### 4.2 Actualización de Datos
 
@@ -95,6 +110,18 @@ Validaciones obligatorias en backend:
 - Se aplica eliminación lógica (`is_active = false`).
 - Se registra motivo, usuario y fecha.
 - La información histórica permanece disponible para auditoría.
+
+### 4.4 Representación
+
+Un miembro representante es una persona que **no tiene ataxia** pero pertenece a la agrupación en calidad de familiar, tutor legal o cuidador de una persona con ataxia.
+
+Reglas:
+
+- Un representante puede referir a una persona ya registrada en el sistema (`representadoId`) o a alguien externo (`representadoNombre` + `representadoRut`).
+- Una persona con ataxia puede tener más de un representante registrado.
+- `tipoAtaxiaId` y `estadoDiagnostico` son exclusivos de miembros pacientes; en representantes estos campos deben ser `null`.
+- El cambio del campo `esRepresentante` después del registro queda registrado en auditoría.
+- Los representantes **no se incluyen** en estadísticas de tipos de ataxia ni distribución por diagnóstico.
 
 ---
 
@@ -149,6 +176,8 @@ Reglas:
 - No exponer datos individuales.
 - Control de acceso por rol.
 - Registro de generación de reportes en auditoría.
+- Los reportes de distribución por tipo de ataxia, grupo diagnóstico y estado diagnóstico excluyen a los miembros con `esRepresentante: true`.
+- Se pueden generar estadísticas separadas sobre cantidad de representantes por región.
 
 ### 7.2 Reportes Permitidos
 
@@ -325,21 +354,23 @@ No se implementa `DELETE` — la eliminación de una región o comuna rompería 
 
 ## 16. Endpoints de Miembros
 
-```
-GET    /members
-GET    /members/{id}
-POST   /members
-PUT    /members/{id}
-PATCH  /members/{id}
-DELETE /members/{id}        (eliminación lógica)
-```
+| Método | Ruta | Roles | Descripción |
+| ------ | ---- | ----- | ----------- |
+| `GET` | `/members` | `admin`, `secretario` | Lista miembros; acepta filtros por query |
+| `GET` | `/members/:id` | `admin`, `secretario` | Detalle de un miembro |
+| `POST` | `/members` | `admin`, `secretario` | Crea nuevo miembro |
+| `PUT` | `/members/:id` | `admin`, `secretario` | Actualiza datos personales: `nombre`, `apellido`, `email`, `telefono`, `celular`, `direccion`, `profesion`, `estadoCivil`, `comunaId`, `tipoAtaxiaId`, `estadoDiagnostico` |
+| `PATCH` | `/members/:id/estado` | `admin`, `secretario` | Cambia `estado` del socio (`activo` → `renunciado` / `suspendido` / `fallecido`). Registra `fechaCambioEstado` automáticamente. |
+| `DELETE` | `/members/:id` | `admin` | Eliminación lógica (`isActive = false`) |
 
-Filtros permitidos:
+Filtros permitidos en `GET /members`:
 
 ```
 GET /members?region=
 GET /members?ataxiaType=
 GET /members?yearOfBirth=
+GET /members?estado=activo|renunciado|suspendido|fallecido
+GET /members?esRepresentante=true|false
 GET /members?active=true
 ```
 
@@ -573,7 +604,7 @@ export class AtaxiaType {
 }
 ```
 
-**`Member`** — socios de la agrupación, referencia `comunaId` y `tipoAtaxiaId` como FK:
+**`Member`** — socios de la agrupación. Puede ser paciente (tiene ataxia) o representante (familiar/tutor/cuidador):
 
 ```typescript
 export enum EstadoDiagnostico {
@@ -582,33 +613,96 @@ export enum EstadoDiagnostico {
   EN_ESTUDIO  = 'en_estudio',
 }
 
+export enum EstadoSocio {
+  ACTIVO      = 'activo',
+  RENUNCIADO  = 'renunciado',
+  SUSPENDIDO  = 'suspendido',
+  FALLECIDO   = 'fallecido',
+}
+
+export enum EstadoCivil {
+  SOLTERO     = 'soltero',
+  SOLTERA     = 'soltera',
+  CASADO      = 'casado',
+  CASADA      = 'casada',
+  VIUDO       = 'viudo',
+  VIUDA       = 'viuda',
+  DIVORCIADO  = 'divorciado',
+  DIVORCIADA  = 'divorciada',
+}
+
+export enum TipoRepresentacion {
+  PADRE_MADRE  = 'padre_madre',   // padre o madre
+  CONYUGE      = 'conyuge',       // cónyuge o conviviente
+  HIJO_HIJA    = 'hijo_hija',
+  TUTOR_LEGAL  = 'tutor_legal',
+  CUIDADOR     = 'cuidador',      // cuidador formal o informal
+  OTRO         = 'otro',
+}
+
 @Entity('members')
 export class Member {
   @PrimaryGeneratedColumn('uuid') id: string;
-  @Column({ unique: true }) rut: string;
+
+  // ── Identidad ──────────────────────────────────────────────────
+  @Column({ unique: true }) rut: string;            // formato "12345678-9" (incluye dígito verificador)
   @Column() nombre: string;
   @Column() apellido: string;
+  @Column({ nullable: true }) sexo: string;         // 'M' | 'F' | 'otro'
+  @Column() fechaNacimiento: Date;
+
+  // ── Contacto ───────────────────────────────────────────────────
   @Column({ nullable: true }) email: string;
-  @Column({ nullable: true }) telefono: string;
+  @Column({ nullable: true }) telefono: string;     // teléfono fijo
+  @Column({ nullable: true }) celular: string;      // teléfono móvil
   @Column({ nullable: true }) direccion: string;
+
+  // ── Geografía ──────────────────────────────────────────────────
   @Column() comunaId: number;
   @ManyToOne(() => Comuna)
   @JoinColumn({ name: 'comunaId' })
-  comuna: Comuna;
-  @Column() fechaNacimiento: Date;
-  @Column({ nullable: true }) sexo: string;
-  @Column() tipoAtaxiaId: number;
-  @ManyToOne(() => AtaxiaType)
+  comuna: Comuna;                                   // región se obtiene vía comuna → region
+
+  // ── Datos sociodemográficos ────────────────────────────────────
+  @Column({ nullable: true }) profesion: string;
+  @Column({ type: 'varchar', nullable: true })
+  estadoCivil: EstadoCivil;
+
+  // ── Tipo de miembro ────────────────────────────────────────────
+  @Column({ default: false }) esRepresentante: boolean; // false = paciente, true = representante
+
+  // ── Ataxia (solo si esRepresentante = false) ───────────────────
+  @Column({ nullable: true }) tipoAtaxiaId: number;
+  @ManyToOne(() => AtaxiaType, { nullable: true })
   @JoinColumn({ name: 'tipoAtaxiaId' })
   tipoAtaxia: AtaxiaType;
-  @Column({ type: 'varchar', default: EstadoDiagnostico.EN_ESTUDIO })
+  @Column({ type: 'varchar', nullable: true })
   estadoDiagnostico: EstadoDiagnostico;             // dato del paciente, no del catálogo
-  @Column({ type: 'varchar', enum: ['activo', 'inactivo', 'pendiente'] })
-  estado: string;
+
+  // ── Representación (solo si esRepresentante = true) ────────────
+  @Column({ type: 'varchar', nullable: true })
+  tipoRepresentacion: TipoRepresentacion;
+
+  @Column({ nullable: true }) representadoId: string;   // UUID de miembro ya registrado
+  @ManyToOne(() => Member, { nullable: true })
+  @JoinColumn({ name: 'representadoId' })
+  representado: Member;                                  // relación auto-referencial
+
+  @Column({ nullable: true }) representadoNombre: string; // si la persona no está registrada
+  @Column({ nullable: true }) representadoRut: string;    // si la persona no está registrada
+
+  // ── Estado en la asociación ────────────────────────────────────
+  @Column({ type: 'varchar', default: EstadoSocio.ACTIVO })
+  estado: EstadoSocio;                              // activo | renunciado | suspendido | fallecido
+  @Column() fechaIngreso: Date;
+  @Column({ nullable: true }) fechaCambioEstado: Date; // se actualiza automáticamente al cambiar estado
+
+  // ── Consentimiento ─────────────────────────────────────────────
   @Column({ default: true }) consentimientoAlmacenamiento: boolean;
   @Column({ default: false }) consentimientoEstadisticas: boolean;
   @Column({ nullable: true }) fechaConsentimiento: Date;
-  @Column() fechaIngreso: Date;
+
+  // ── Metadatos ──────────────────────────────────────────────────
   @Column({ default: true }) isActive: boolean;
   @CreateDateColumn() createdAt: Date;
   @UpdateDateColumn() updatedAt: Date;

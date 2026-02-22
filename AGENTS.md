@@ -73,6 +73,23 @@ Controller → Service → Repository (TypeORM Entity)
 - **Tokens JWT**: `access_token` (15 min, firmado con `JWT_SECRET`) + `refresh_token` (7 días, firmado con `JWT_REFRESH_SECRET`). El refresh token se almacena hasheado en BD. `JwtStrategy.validate()` consulta la BD en cada request para verificar que el usuario sigue activo.
 - **Geografía**: El módulo `geo` expone regiones y comunas de Chile. Al crear un miembro se envía `comunaId`; la región se obtiene a través de la relación `comuna → region`. Las tablas se pueblan con un seeder al iniciar la app.
 - **Catálogo de ataxia**: El módulo `ataxia-types` expone un catálogo controlado de tipos de ataxia. Los tipos se agrupan por `GrupoAtaxia` (`hereditaria`, `adquirida`, `idiopatica`, `otra`). El catálogo se puebla con un seeder al iniciar la app. Al crear un miembro se envían dos campos diferenciados: `tipoAtaxiaId` (FK al catálogo) y `estadoDiagnostico` (`confirmado` / `presuntivo` / `en_estudio`); el segundo es un dato clínico del paciente, no del catálogo. Los tipos no se eliminan físicamente — se desactivan con `PATCH /ataxia-types/:id/status`.
+- **Módulo members**: Gestiona los socios de la agrupación. Campos clave del dominio:
+  - `rut` — string formato `"12345678-9"` (incluye dígito verificador), único.
+  - `nombre` / `apellido` — almacenados separados (no en un solo campo).
+  - `telefono` (fijo) y `celular` (móvil) — ambos opcionales, campos independientes.
+  - `profesion` — texto libre, opcional.
+  - `estadoCivil` — enum `EstadoCivil`: `soltero`, `soltera`, `casado`, `casada`, `viudo`, `viuda`, `divorciado`, `divorciada`.
+  - `estado` — enum `EstadoSocio`: `activo`, `renunciado`, `suspendido`, `fallecido`. Se modifica **exclusivamente** vía `PATCH /members/:id/estado`; ese endpoint registra `fechaCambioEstado` automáticamente.
+  - `fechaIngreso` — fecha de inscripción en la asociación (no `createdAt`).
+  - `fechaCambioEstado` — fecha del último cambio de `estado`; se actualiza automáticamente al usar el endpoint de cambio de estado.
+  - Los años (`anio_inscripcion`, `anio_cambio_estado`) **no se almacenan** — se derivan de `fechaIngreso.getFullYear()` y `fechaCambioEstado.getFullYear()` cuando se necesiten en estadísticas.
+  - `PUT /members/:id` actualiza solo datos personales (contacto, geografía, sociodemográficos, ataxia). No modifica `estado`.
+  - Eliminación lógica vía `DELETE /members/:id` (`isActive = false`) — nunca borrado físico.
+  - `esRepresentante` — `boolean` (default `false`). `false` = paciente con ataxia; `true` = representante (familiar, tutor o cuidador de una persona con ataxia).
+  - Si `esRepresentante = true`: `tipoAtaxiaId` y `estadoDiagnostico` deben ser `null`; se requiere `tipoRepresentacion` y al menos uno de `representadoId` (UUID de miembro ya registrado) o `representadoNombre` + `representadoRut` (persona aún no registrada en el sistema).
+  - `tipoRepresentacion` — enum `TipoRepresentacion`: `padre_madre`, `conyuge`, `hijo_hija`, `tutor_legal`, `cuidador`, `otro`. Solo aplica cuando `esRepresentante = true`.
+  - `representado` es una relación auto-referencial (`Member → Member`); si la persona representada no está en el sistema se usan los campos de texto `representadoNombre` y `representadoRut`.
+  - Los representantes se excluyen de las estadísticas de diagnóstico de ataxia. El filtro `GET /members?esRepresentante=true|false` permite listarlos separadamente.
 - **Recuperación de contraseña**:
   1. `POST /auth/forgot-password` — recibe `email`; busca el usuario, genera token con `crypto.randomBytes(32)`, almacena el **hash** del token y su expiración (1 hora) en los campos `resetPasswordToken` / `resetPasswordExpires` de la entidad `User`; envía email con enlace al frontend (`/reset-password?token=<token-en-claro>`); responde siempre con mensaje genérico sin confirmar si el email existe (previene enumeración de usuarios).
   2. `POST /auth/reset-password` — recibe `token` + `nuevaPassword`; busca usuario por hash del token y verifica que no haya expirado; hashea la nueva contraseña con bcrypt (10 rounds); limpia `resetPasswordToken` y `resetPasswordExpires`; registra el evento en auditoría.
