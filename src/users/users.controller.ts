@@ -66,7 +66,7 @@ export class UsersController {
 
   @Public()
   @Post('register')
-  @ApiOperation({ summary: 'Registrar nuevo usuario administrativo' })
+  @ApiOperation({ summary: 'Registrar nuevo usuario', description: 'Crea un usuario con rol `usuario` por defecto. El rol puede ser elevado posteriormente por un `superadmin` vía PATCH /users/:id/rol.' })
   @ApiResponse({ status: 201, description: 'Usuario creado — se envía correo de activación' })
   @ApiResponse({ status: 409, description: 'El correo ya está registrado' })
   async create(@Body() dto: CreateUserDto) {

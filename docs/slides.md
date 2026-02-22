@@ -73,7 +73,7 @@ Plataforma de gestión para la **Agrupación AtaxChile** que permite:
 | Framework | NestJS 11 + TypeScript |
 | ORM | TypeORM 0.3 |
 | BD Producción | PostgreSQL (Supabase) |
-| BD Desarrollo | SQLite en memoria |
+| BD Desarrollo | SQLite en archivo (`./db/dev.db`) |
 | Autenticación | JWT (Passport) — access + refresh tokens |
 | Validación | class-validator + class-transformer |
 | Email | Resend |
@@ -117,6 +117,7 @@ src/
 | `admin` | Miembros, catálogos, reportes |
 | `secretario` | Crear, actualizar y desactivar miembros |
 | `tesorero` | Membresías y cuotas |
+| `usuario` | Rol por defecto al registrarse — sin acceso administrativo |
 
 ---
 
@@ -145,25 +146,27 @@ POST /auth/change-password  → cambia contraseña conociendo la actual
 **Rutas:** `POST /users/register` → `GET /users/activar/:token` (ambas públicas)
 
 ```
-1. Cliente envía: nombre, email, password, rol
+1. Cliente envía: nombre, email, password
        ↓
 2. Backend verifica que el email no esté registrado (409 si existe)
        ↓
 3. Hashea password con bcrypt (10 rounds)
        ↓
-4. Genera token de activación con crypto.randomBytes(32)
+4. Asigna rol = 'usuario' automáticamente (no se acepta rol en el body)
        ↓
-5. Almacena HASH del token + expiración en BD (users.tokenActivacion)
+5. Genera token de activación con randomUUID()
        ↓
-6. Envía email con enlace: /activar?token=<token-en-claro>
+6. Almacena token + expiración (24 h) en BD (users.tokenActivacion)
        ↓
-7. Responde: "Hemos enviado un correo a {email} para activar la cuenta"
+7. Envía email con enlace: /activar?token=<token>
        ↓
-8. Usuario hace clic → GET /users/activar/:token
+8. Responde: "Hemos enviado un correo a {email} para activar la cuenta"
        ↓
-9. Backend valida hash + expiración → activa cuenta (cuentaActivada = true)
+9. Usuario hace clic → GET /users/activar/:token
        ↓
-10. Limpia tokenActivacion y tokenExpiracion de la BD
+10. Backend valida token + expiración → activa cuenta (cuentaActivada = true)
+       ↓
+11. Limpia tokenActivacion y tokenExpiracion de la BD
 ```
 
 > Hasta que la cuenta **no esté activada**, el login es rechazado.

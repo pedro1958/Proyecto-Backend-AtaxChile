@@ -200,6 +200,7 @@ Los roles aplican exclusivamente a **usuarios administrativos** (`users`). Los m
 | `admin`      | Administración general: miembros, catálogos, reportes y lectura completa.                   |
 | `secretario` | Gestión de miembros: crear, actualizar y desactivar registros.                              |
 | `tesorero`   | Acceso a membresías y cuotas.                                                               |
+| `usuario`    | Rol por defecto asignado automáticamente al registrarse. Sin acceso a funciones administrativas. El `superadmin` puede elevar el rol posteriormente. |
 
 ### 8.2 Reglas
 
@@ -309,7 +310,7 @@ Toda API debe estar versionada.
 | ------ | ---- | ------ | ----------- |
 | `GET` | `/users` | superadmin, admin | Lista todos los usuarios |
 | `GET` | `/users/:id` | Autenticado (propio) | Retorna perfil: `nombre`, `email`, `rol` |
-| `POST` | `/users/register` | Público | Registra nuevo usuario, envía email de activación |
+| `POST` | `/users/register` | Público | Registra nuevo usuario con rol `usuario` por defecto, envía email de activación |
 | `GET` | `/users/activar/:token` | Público | Activa cuenta desde enlace del correo |
 | `PUT` | `/users/:id` | Autenticado (propio) | Modifica `nombre` o `email` — no modifica `rol` |
 | `PATCH` | `/users/:id/rol` | superadmin | Cambia el rol del usuario |
@@ -539,17 +540,22 @@ router.delete('/:id', autenticar, autorizar(1), UsuarioController.eliminar);
 **`User`** — usuarios administrativos del sistema:
 
 ```typescript
+export enum Rol {
+  SUPERADMIN = 'superadmin',
+  ADMIN      = 'admin',
+  SECRETARIO = 'secretario',
+  TESORERO   = 'tesorero',
+  USUARIO    = 'usuario',         // rol por defecto al registrarse
+}
+
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn() id: number;
   @Column({ unique: true }) email: string;
   @Column() nombre: string;
   @Column() password: string; // bcrypt
-  @Column({
-    type: 'enum',
-    enum: ['superadmin', 'admin', 'secretario', 'tesorero'],
-  })
-  rol: string;
+  @Column({ type: 'simple-enum', enum: Rol, default: Rol.USUARIO })
+  rol: Rol;
   @Column({ default: true }) activo: boolean;
   @CreateDateColumn() createdAt: Date;
   @UpdateDateColumn() updatedAt: Date;
