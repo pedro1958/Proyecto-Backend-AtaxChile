@@ -89,7 +89,6 @@ describe('UsersController', () => {
         nombre: 'Admin',
         email: 'admin@test.cl',
         password: 'password123',
-        rol: Rol.ADMIN,
       }
       const result = await controller.create(dto)
       expect(service.create).toHaveBeenCalledWith(dto)

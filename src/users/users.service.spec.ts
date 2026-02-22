@@ -35,7 +35,6 @@ const createDto: CreateUserDto = {
   nombre: 'Admin Test',
   email: 'admin@test.cl',
   password: 'password123',
-  rol: Rol.ADMIN,
 }
 
 describe('UsersService', () => {
@@ -90,6 +89,19 @@ describe('UsersService', () => {
       expect(mailerService.enviarActivacion).toHaveBeenCalledWith(
         createDto.email,
         expect.any(String),
+      )
+    })
+
+    it('debe asignar rol USUARIO por defecto al crear', async () => {
+      repo.findOneBy.mockResolvedValue(null)
+      repo.create.mockReturnValue(mockUser)
+      repo.save.mockResolvedValue(mockUser)
+      jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashed' as never)
+
+      await service.create(createDto)
+
+      expect(repo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ rol: Rol.USUARIO }),
       )
     })
 

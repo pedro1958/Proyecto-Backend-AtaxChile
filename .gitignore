@@ -4,6 +4,9 @@
 /build
 /sql
 
+# SQLite dev database
+/db
+
 # Logs
 logs
 *.log

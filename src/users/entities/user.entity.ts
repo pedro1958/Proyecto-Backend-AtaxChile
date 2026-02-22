@@ -11,6 +11,7 @@ export enum Rol {
   ADMIN = 'admin',
   SECRETARIO = 'secretario',
   TESORERO = 'tesorero',
+  USUARIO = 'usuario',
 }
 
 @Entity('users')
@@ -27,7 +28,7 @@ export class User {
   @Column()
   password: string
 
-  @Column({ type: 'simple-enum', enum: Rol })
+  @Column({ type: 'simple-enum', enum: Rol, default: Rol.USUARIO })
   rol: Rol
 
   @Column({ default: true })

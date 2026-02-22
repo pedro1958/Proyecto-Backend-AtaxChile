@@ -9,7 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
-import { User } from './entities/user.entity';
+import { Rol, User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateRolDto } from './dto/update-rol.dto';
@@ -44,6 +44,7 @@ export class UsersService {
     const usuario = this.usersRepository.create({
       ...dto,
       password: hash,
+      rol: Rol.USUARIO,
       cuentaActivada: false,
       tokenActivacion: token,
       tokenExpiracion: expiracion,

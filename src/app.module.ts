@@ -36,7 +36,7 @@ import { RolesGuard } from './auth/guards/roles.guard'
 
         return {
           type: 'better-sqlite3',
-          database: ':memory:',
+          database: './db/dev.db',
           autoLoadEntities: true,
           synchronize: true, // crea tablas automáticamente en memoria
         }
