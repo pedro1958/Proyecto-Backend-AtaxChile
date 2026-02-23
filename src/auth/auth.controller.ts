@@ -5,6 +5,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger'
+import { Throttle } from '@nestjs/throttler'
 import { AuthService } from './auth.service'
 import { UsersService } from '../users/users.service'
 import { LoginDto } from './dto/login.dto'
@@ -26,6 +27,7 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ global: { ttl: 60_000, limit: 5 } }) // 5 intentos por minuto (brute force)
   @ApiOperation({ summary: 'Iniciar sesión' })
   @ApiResponse({ status: 200, description: 'Retorna access_token (15 min) y refresh_token (7 días)' })
   @ApiResponse({ status: 401, description: 'Credenciales inválidas o cuenta inactiva' })
@@ -36,6 +38,7 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ global: { ttl: 60_000, limit: 10 } }) // 10 renovaciones por minuto
   @ApiOperation({ summary: 'Renovar access token' })
   @ApiResponse({ status: 200, description: 'Retorna nuevo access_token' })
   @ApiResponse({ status: 401, description: 'Refresh token inválido o expirado' })
@@ -56,6 +59,7 @@ export class AuthController {
   @Public()
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ global: { ttl: 900_000, limit: 3 } }) // 3 solicitudes cada 15 minutos (evita flooding de emails)
   @ApiOperation({ summary: 'Solicitar recuperación de contraseña' })
   @ApiResponse({ status: 200, description: 'Respuesta genérica (no confirma si el email existe)' })
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
@@ -69,6 +73,7 @@ export class AuthController {
   @Public()
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ global: { ttl: 900_000, limit: 5 } }) // 5 intentos cada 15 minutos
   @ApiOperation({ summary: 'Restablecer contraseña con token de correo' })
   @ApiResponse({ status: 200, description: 'Contraseña restablecida correctamente' })
   @ApiResponse({ status: 400, description: 'Token inválido o expirado' })

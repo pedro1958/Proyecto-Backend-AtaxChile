@@ -16,6 +16,10 @@ const mockUser: User = {
   cuentaActivada: false,
   tokenActivacion: 'token-uuid-123',
   tokenExpiracion: new Date(Date.now() + 24 * 60 * 60 * 1000),
+  resetPasswordToken: null,
+  resetPasswordExpires: null,
+  refreshToken: null,
+  refreshTokenExpires: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 }

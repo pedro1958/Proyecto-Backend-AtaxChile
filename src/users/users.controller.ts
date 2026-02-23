@@ -19,6 +19,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger'
+import { Throttle } from '@nestjs/throttler'
 import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { UpdateRolDto } from './dto/update-rol.dto'
@@ -45,6 +46,7 @@ export class UsersController {
 
   @Public()
   @Get('activar/:token')
+  @Throttle({ global: { ttl: 60_000, limit: 10 } }) // 10 intentos por minuto
   @ApiOperation({ summary: 'Activar cuenta desde enlace de correo' })
   @ApiParam({ name: 'token', description: 'Token de activación recibido por correo' })
   @ApiResponse({ status: 200, description: 'Cuenta activada correctamente' })
@@ -66,6 +68,7 @@ export class UsersController {
 
   @Public()
   @Post('register')
+  @Throttle({ global: { ttl: 3_600_000, limit: 5 } }) // 5 registros por hora por IP (anti-spam)
   @ApiOperation({ summary: 'Registrar nuevo usuario', description: 'Crea un usuario con rol `usuario` por defecto. El rol puede ser elevado posteriormente por un `superadmin` vía PATCH /users/:id/rol.' })
   @ApiResponse({ status: 201, description: 'Usuario creado — se envía correo de activación' })
   @ApiResponse({ status: 409, description: 'El correo ya está registrado' })
