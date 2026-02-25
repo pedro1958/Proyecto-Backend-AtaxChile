@@ -9,6 +9,7 @@ import { UsersModule } from './users/users.module'
 import { AuthModule } from './auth/auth.module'
 import { GeoModule } from './geo/geo.module'
 import { AtaxiaTypesModule } from './ataxia-types/ataxia-types.module'
+import { MiembrosModule } from './miembros/miembros.module'
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard'
 import { RolesGuard } from './auth/guards/roles.guard'
 
@@ -55,6 +56,7 @@ import { RolesGuard } from './auth/guards/roles.guard'
     AuthModule,
     GeoModule,
     AtaxiaTypesModule,
+    MiembrosModule,
   ],
   controllers: [AppController],
   providers: [

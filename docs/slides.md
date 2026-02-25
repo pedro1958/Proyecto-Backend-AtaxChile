@@ -89,7 +89,7 @@ src/
 ├── auth/          Autenticación JWT, guards, decoradores
 ├── users/         Usuarios administrativos (staff y directivos)
 ├── geo/           Regiones y comunas de Chile (datos de referencia)
-├── members/       Socios de la agrupación — pacientes y representantes
+├── miembros/      Socios de la agrupación
 ├── ataxia-types/  Catálogo controlado de tipos de ataxia
 ├── stats/         Estadísticas agregadas (solo lectura)
 ├── audit/         Registro de auditoría inmutable
@@ -322,7 +322,7 @@ export enum TipoRepresentacion {
 | Usuarios | `/users` | CRUD + activar cuenta + cambio de rol/status |
 | Geo | `/geo` | Regiones y comunas (lectura pública, escritura admin) |
 | Tipos de Ataxia | `/ataxia-types` | Catálogo con filtro `?grupo=` + soft delete |
-| Miembros | `/members` | CRUD + `PATCH /:id/estado` + filtros |
+| Miembros | `/miembros` | `POST`, `GET`, `GET /:id`, `PATCH /:id`, `PATCH /:id/estado`, `PATCH /:id/vincular-usuario` |
 | Estadísticas | `/stats` | Por tipo, región, rango etario, crecimiento anual |
 | Auditoría | `/audit-logs` | Solo lectura, acceso superadmin |
 | Exportaciones | `/exports` | CSV / XLSX — solo roles autorizados |
@@ -366,7 +366,7 @@ SwaggerModule.setup('api/docs', app, document)
 | `users` | ✅ Implementado y testeado |
 | `geo` | ✅ Implementado y testeado |
 | `ataxia-types` | ✅ Implementado y testeado |
-| `members` | 🔲 Diseñado — pendiente implementación |
+| `miembros` | ✅ Implementado y testeado |
 | `stats` | 🔲 Pendiente |
 | `audit` | 🔲 Pendiente |
 | `exports` | 🔲 Pendiente |
@@ -378,11 +378,9 @@ SwaggerModule.setup('api/docs', app, document)
 
 # Próximos Pasos
 
-1. Implementar módulo `members` (entidad, DTOs, service, controller)
-2. Implementar módulo `audit` (registro inmutable de eventos)
-3. Implementar módulo `stats` (reportes agregados)
-4. Implementar módulo `exports` (CSV / XLSX)
-5. Agregar Swagger al módulo `members` una vez implementado
+1. Implementar módulo `audit` (registro inmutable de eventos)
+2. Implementar módulo `stats` (reportes agregados)
+3. Implementar módulo `exports` (CSV / XLSX)
 
 ---
 

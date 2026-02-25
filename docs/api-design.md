@@ -357,22 +357,17 @@ No se implementa `DELETE` — la eliminación de una región o comuna rompería 
 
 | Método | Ruta | Roles | Descripción |
 | ------ | ---- | ----- | ----------- |
-| `GET` | `/members` | `admin`, `secretario` | Lista miembros; acepta filtros por query |
-| `GET` | `/members/:id` | `admin`, `secretario` | Detalle de un miembro |
-| `POST` | `/members` | `admin`, `secretario` | Crea nuevo miembro |
-| `PUT` | `/members/:id` | `admin`, `secretario` | Actualiza datos personales: `nombre`, `apellido`, `email`, `telefono`, `celular`, `direccion`, `profesion`, `estadoCivil`, `comunaId`, `tipoAtaxiaId`, `estadoDiagnostico` |
-| `PATCH` | `/members/:id/estado` | `admin`, `secretario` | Cambia `estado` del socio (`activo` → `renunciado` / `suspendido` / `fallecido`). Registra `fechaCambioEstado` automáticamente. |
-| `DELETE` | `/members/:id` | `admin` | Eliminación lógica (`isActive = false`) |
+| `GET` | `/miembros` | `admin`, `secretario`, `tesorero` | Lista socios; acepta filtro `?estado=` |
+| `GET` | `/miembros/:id` | `admin`, `secretario` | Detalle de un socio con relaciones (región, comuna, tipo de ataxia) |
+| `POST` | `/miembros` | `admin`, `secretario` | Registra nuevo socio. El RUT se normaliza y valida automáticamente. |
+| `PATCH` | `/miembros/:id` | `admin`, `secretario` | Actualiza datos del socio. El RUT no se puede modificar. |
+| `PATCH` | `/miembros/:id/estado` | `admin` | Cambia `estado` del socio (`activo` → `renunciado` / `suspendido` / `fallecido`). Registra `fechaCambioEstado` automáticamente. |
+| `PATCH` | `/miembros/:id/vincular-usuario` | `admin` | Vincula una cuenta de sistema (`userId`) al socio. Un `userId` solo puede estar vinculado a un socio a la vez. |
 
-Filtros permitidos en `GET /members`:
+Filtro disponible en `GET /miembros`:
 
 ```
-GET /members?region=
-GET /members?ataxiaType=
-GET /members?yearOfBirth=
-GET /members?estado=activo|renunciado|suspendido|fallecido
-GET /members?esRepresentante=true|false
-GET /members?active=true
+GET /miembros?estado=activo|renunciado|suspendido|fallecido
 ```
 
 ---
@@ -944,15 +939,17 @@ src/
 │   ├── geo.seeder.ts               # Puebla regiones y comunas al iniciar si las tablas están vacías
 │   └── geo.module.ts
 │
-├── members/                        # Socios de la agrupación
+├── miembros/                       # Socios de la agrupación
 │   ├── dto/
-│   │   ├── create-member.dto.ts    # Incluye comunaId (FK)
-│   │   └── update-member.dto.ts
+│   │   ├── create-miembro.dto.ts   # rut (validado), nombre, fechaInscripcion + campos opcionales
+│   │   ├── update-miembro.dto.ts   # PartialType de create sin rut
+│   │   ├── update-estado.dto.ts    # solo campo estado (EstadoSocio)
+│   │   └── vincular-usuario.dto.ts # userId (int, positivo)
 │   ├── entities/
-│   │   └── member.entity.ts        # Entidad TypeORM: rut, nombre, comunaId, tipoAtaxia, estado, etc.
-│   ├── members.controller.ts       # Endpoints /members
-│   ├── members.service.ts
-│   └── members.module.ts
+│   │   └── miembro.entity.ts       # Entidad TypeORM: rut, nombre, estado, relaciones geo/ataxia/user
+│   ├── miembros.controller.ts      # Endpoints /miembros
+│   ├── miembros.service.ts
+│   └── miembros.module.ts
 │
 ├── ataxia-types/                   # Catálogo controlado de tipos de ataxia
 │   ├── dto/
