@@ -44,6 +44,12 @@ describe('RolesGuard', () => {
       expect(guard.canActivate(buildContext(Rol.SECRETARIO))).toBe(false)
     })
 
+    it('debe permitir acceso a SUPERADMIN sin importar los roles requeridos', () => {
+      jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([Rol.ADMIN])
+
+      expect(guard.canActivate(buildContext(Rol.SUPERADMIN))).toBe(true)
+    })
+
     it('debe permitir acceso si el usuario tiene uno de los roles permitidos', () => {
       jest
         .spyOn(reflector, 'getAllAndOverride')
