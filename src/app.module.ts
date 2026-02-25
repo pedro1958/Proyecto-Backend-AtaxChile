@@ -26,27 +26,28 @@ import { RolesGuard } from './auth/guards/roles.guard'
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        const isProduction = config.get<string>('NODE_ENV') === 'production'
+        const env = config.get<string>('NODE_ENV')
 
-        if (isProduction) {
+        if (env === 'production' || env === 'development') {
           return {
             type: 'postgres',
             host: config.get<string>('DB_HOST'),
-            port: config.get<number>('DB_PORT'),
+            port: parseInt(config.get<string>('DB_PORT') ?? '5432', 10),
             username: config.get<string>('DB_USER'),
             password: config.get<string>('DB_PASSWORD'),
             database: config.get<string>('DB_NAME'),
             autoLoadEntities: true,
-            synchronize: false,
-            ssl: { rejectUnauthorized: false }, // requerido por Supabase
+            synchronize: env === 'development', // solo en dev, prod usa migraciones
+            ssl: env === 'production' ? { rejectUnauthorized: false } : false,
           }
         }
 
+        // NODE_ENV=test — SQLite en memoria, sin estado entre ejecuciones
         return {
           type: 'better-sqlite3',
-          database: './db/dev.db',
+          database: ':memory:',
           autoLoadEntities: true,
-          synchronize: true, // crea tablas automáticamente en memoria
+          synchronize: true,
         }
       },
     }),

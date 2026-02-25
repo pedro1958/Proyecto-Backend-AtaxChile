@@ -40,19 +40,19 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   tokenActivacion: string | null
 
-  @Column({ type: 'datetime', nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   tokenExpiracion: Date | null
 
   @Column({ type: 'varchar', nullable: true })
   resetPasswordToken: string | null
 
-  @Column({ type: 'datetime', nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   resetPasswordExpires: Date | null
 
   @Column({ type: 'varchar', nullable: true })
   refreshToken: string | null
 
-  @Column({ type: 'datetime', nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   refreshTokenExpires: Date | null
 
   @CreateDateColumn()
