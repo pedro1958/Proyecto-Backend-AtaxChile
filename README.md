@@ -1,98 +1,157 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# AtaxChile — Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API REST para la gestión de socios de la Asociación AtaxChile.
+Stack: **NestJS 11 · TypeORM · PostgreSQL 16 · JWT · Resend**
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## Requisitos previos
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+| Herramienta | Versión mínima |
+|-------------|---------------|
+| Node.js     | 20.x          |
+| npm         | 10.x          |
+| Docker      | 24.x          |
 
-## Project setup
+---
+
+## Configuración inicial
+
+### 1. Variables de entorno
 
 ```bash
-$ npm install
+cp .env.example .env
 ```
 
-## Compile and run the project
+Edita `.env` y completa los valores obligatorios:
+
+```env
+JWT_SECRET=<cadena aleatoria larga>
+JWT_REFRESH_SECRET=<cadena distinta a JWT_SECRET>
+DB_PASSWORD=postgres
+FRONTEND_URL=http://localhost:3000
+RESEND_API_KEY=re_xxxxxxxxxxxx
+```
+
+> Los valores de `DB_HOST`, `DB_PORT`, `DB_USER` y `DB_NAME` ya están
+> preconfigurados para el contenedor Docker de desarrollo.
+
+### 2. Dependencias
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
 ```
 
-## Run tests
+---
+
+## Base de datos — contenedor Docker
 
 ```bash
-# unit tests
-$ npm run test
+# Levantar PostgreSQL en segundo plano
+docker compose up -d
 
-# e2e tests
-$ npm run test:e2e
+# Verificar que está corriendo
+docker compose ps
 
-# test coverage
-$ npm run test:cov
+# Ver logs
+docker compose logs -f db
+
+# Detener (sin borrar datos)
+docker compose stop
+
+# Detener y eliminar contenedor (datos persisten en el volumen)
+docker compose down
+
+# Eliminar contenedor Y volumen (reset completo)
+docker compose down -v
 ```
 
-## Deployment
+El contenedor expone PostgreSQL en el puerto **5434** (evita conflictos con
+instalaciones locales en 5432/5433).
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+| Parámetro | Valor          |
+|-----------|----------------|
+| Host      | localhost      |
+| Puerto    | 5434           |
+| Usuario   | postgres       |
+| Password  | postgres       |
+| Base      | ataxchile_dev  |
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+---
+
+## Servidor de desarrollo
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Modo watch (recompila en cada cambio)
+npm run start:dev
+
+# Modo normal
+npm run start
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+El servidor queda disponible en `http://localhost:5000`.
 
-## Resources
+### Documentación interactiva (Swagger)
 
-Check out a few resources that may come in handy when working with NestJS:
+```
+http://localhost:5000/api
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+---
 
-## Support
+## Tests
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```bash
+# Unitarios
+npm run test
 
-## Stay in touch
+# Unitarios en modo watch
+npm run test:watch
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+# E2E
+npm run test:e2e
 
-## License
+# Cobertura
+npm run test:cov
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+---
+
+## Build de producción
+
+```bash
+npm run build
+npm run start:prod
+```
+
+---
+
+## Variables de entorno — referencia completa
+
+| Variable             | Descripción                                            | Requerida |
+|----------------------|--------------------------------------------------------|-----------|
+| `NODE_ENV`           | `development` o `production`                           | Sí        |
+| `PORT`               | Puerto del servidor (default: 5000)                    | No        |
+| `JWT_SECRET`         | Secreto para access tokens (expiran en 15 min)         | Sí        |
+| `JWT_REFRESH_SECRET` | Secreto para refresh tokens (expiran en 7 días)        | Sí        |
+| `DB_HOST`            | Host de PostgreSQL                                     | Sí        |
+| `DB_PORT`            | Puerto de PostgreSQL (dev: 5434, prod: 5432)           | Sí        |
+| `DB_USER`            | Usuario de la base de datos                            | Sí        |
+| `DB_PASSWORD`        | Contraseña de la base de datos                         | Sí        |
+| `DB_NAME`            | Nombre de la base de datos                             | Sí        |
+| `FRONTEND_URL`       | URL permitida por CORS                                 | Sí        |
+| `RESEND_API_KEY`     | API key de Resend para envío de emails                 | Sí        |
+| `RESEND_FROM`        | Dirección remitente de emails                          | No        |
+| `APP_URL`            | URL base del backend (para links en emails)            | No        |
+
+---
+
+## Flujo de inicio rápido
+
+```bash
+cp .env.example .env      # 1. Configurar variables
+# editar .env ...
+npm install               # 2. Instalar dependencias
+docker compose up -d      # 3. Levantar base de datos
+npm run start:dev         # 4. Iniciar servidor
+```
