@@ -37,6 +37,9 @@ export class UsersService {
       throw new ConflictException('El email ya está registrado');
     }
 
+    const usersCount = await this.usersRepository.count();
+    const rol = usersCount === 0 ? Rol.SUPERADMIN : Rol.USUARIO; // El primer usuario es admin
+
     const hash = await bcrypt.hash(dto.password, 10);
     const token = randomUUID();
     const expiracion = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -44,7 +47,7 @@ export class UsersService {
     const usuario = this.usersRepository.create({
       ...dto,
       password: hash,
-      rol: Rol.USUARIO,
+      rol: rol,
       cuentaActivada: false,
       tokenActivacion: token,
       tokenExpiracion: expiracion,
@@ -114,7 +117,10 @@ export class UsersService {
     const usuario = await this.usersRepository.findOneBy({ id });
     if (!usuario) throw new NotFoundException('Usuario no encontrado');
 
-    const passwordValido = await bcrypt.compare(passwordActual, usuario.password);
+    const passwordValido = await bcrypt.compare(
+      passwordActual,
+      usuario.password,
+    );
     if (!passwordValido)
       throw new UnauthorizedException('La contraseña actual es incorrecta');
 
