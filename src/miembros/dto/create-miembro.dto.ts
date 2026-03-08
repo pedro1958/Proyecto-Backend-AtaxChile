@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsDateString,
   IsEmail,
@@ -7,75 +7,90 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-} from 'class-validator'
+} from 'class-validator';
 import {
   IsRutValido,
   TransformRut,
-} from '../../common/validators/rut.validator'
-import { EstadoCivil } from '../entities/miembro.entity'
+} from '../../common/validators/rut.validator';
+import { EstadoCivil } from '../entities/miembro.entity';
 
 export class CreateMiembroDto {
-  @ApiProperty({ example: '12345678-9', description: 'RUT chileno (acepta 12.345.678-9, 123456789, etc.)' })
+  @ApiProperty({
+    example: '12345678-9',
+    description: 'RUT chileno (acepta 12.345.678-9, 123456789, etc.)',
+  })
   @TransformRut()
   @IsRutValido()
-  rut: string
+  rut: string;
 
   @ApiProperty({ example: 'María González' })
   @IsString()
   @IsNotEmpty()
-  nombre: string
+  nombre: string;
 
-  @ApiPropertyOptional({ example: '1985-03-15', description: 'Fecha de nacimiento (YYYY-MM-DD)' })
+  @ApiPropertyOptional({
+    example: '1985-03-15',
+    description: 'Fecha de nacimiento (YYYY-MM-DD)',
+  })
   @IsOptional()
   @IsDateString()
-  fechaNacimiento?: string
+  fechaNacimiento?: string;
 
   @ApiPropertyOptional({ enum: EstadoCivil })
   @IsOptional()
   @IsEnum(EstadoCivil)
-  estadoCivil?: EstadoCivil
+  estadoCivil?: EstadoCivil;
 
   @ApiPropertyOptional({ example: 'Profesora' })
   @IsOptional()
   @IsString()
-  profesion?: string
+  profesion?: string;
 
   @ApiPropertyOptional({ example: '+56912345678' })
   @IsOptional()
   @IsString()
-  telefono?: string
+  telefono?: string;
 
   @ApiPropertyOptional({ example: '+56987654321' })
   @IsOptional()
   @IsString()
-  celular?: string
+  celular?: string;
 
   @ApiPropertyOptional({ example: 'maria@correo.cl' })
   @IsOptional()
   @IsEmail()
-  email?: string
+  email?: string;
 
   @ApiPropertyOptional({ example: 'Av. Providencia 1234' })
   @IsOptional()
   @IsString()
-  direccion?: string
+  direccion?: string;
 
-  @ApiPropertyOptional({ description: 'ID de la región (ver GET /geo/regiones)' })
+  @ApiPropertyOptional({
+    description: 'ID de la región (ver GET api/v1/geo/regiones)',
+  })
   @IsOptional()
   @IsInt()
-  regionId?: number
+  regionId?: number;
 
-  @ApiPropertyOptional({ description: 'ID de la comuna (ver GET /geo/comunas)' })
+  @ApiPropertyOptional({
+    description: 'ID de la comuna (ver GET api/v1/geo/comunas)',
+  })
   @IsOptional()
   @IsInt()
-  comunaId?: number
+  comunaId?: number;
 
-  @ApiPropertyOptional({ description: 'ID del tipo de ataxia (ver GET /ataxia-types)' })
+  @ApiPropertyOptional({
+    description: 'ID del tipo de ataxia (ver GET api/v1/ataxia-types)',
+  })
   @IsOptional()
   @IsInt()
-  tipoAtaxiaId?: number
+  tipoAtaxiaId?: number;
 
-  @ApiProperty({ example: '2024-01-15', description: 'Fecha de inscripción como socio (YYYY-MM-DD)' })
+  @ApiProperty({
+    example: '2024-01-15',
+    description: 'Fecha de inscripción como socio (YYYY-MM-DD)',
+  })
   @IsDateString()
-  fechaInscripcion: string
+  fechaInscripcion: string;
 }
