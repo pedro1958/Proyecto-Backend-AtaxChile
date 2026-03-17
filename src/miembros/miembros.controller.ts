@@ -26,6 +26,7 @@ import { VincularUsuarioDto } from './dto/vincular-usuario.dto'
 import { EstadoSocio } from './entities/miembro.entity'
 import { Roles } from '../auth/decorators/roles.decorator'
 import { Rol } from '../users/entities/user.entity'
+import { PaginationDto } from '../common/dto/pagination.dto'
 
 @ApiTags('Miembros')
 @ApiBearerAuth()
@@ -46,9 +47,14 @@ export class MiembrosController {
   @Roles(Rol.ADMIN, Rol.SECRETARIO, Rol.TESORERO)
   @ApiOperation({ summary: 'Listar socios' })
   @ApiQuery({ name: 'estado', enum: EstadoSocio, required: false, description: 'Filtrar por estado del socio' })
-  @ApiResponse({ status: 200, description: 'Lista de socios' })
-  findAll(@Query('estado') estado?: EstadoSocio) {
-    return this.miembrosService.findAll(estado)
+  @ApiQuery({ name: 'page', required: false, description: 'Número de página (default: 1)' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Registros por página (default: 20, máx: 100)' })
+  @ApiResponse({ status: 200, description: 'Lista paginada de socios' })
+  findAll(
+    @Query('estado') estado?: EstadoSocio,
+    @Query() pagination?: PaginationDto,
+  ) {
+    return this.miembrosService.findAll(estado, pagination)
   }
 
   @Get(':id')

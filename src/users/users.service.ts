@@ -14,6 +14,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateRolDto } from './dto/update-rol.dto';
 import { MailerService } from '../mailer/mailer.service';
+import { PaginatedResult } from '../common/types/response.types';
 
 type UserSinPassword = Omit<User, 'password'>;
 type PerfilUsuario = Pick<User, 'nombre' | 'email' | 'rol'>;
@@ -58,9 +59,23 @@ export class UsersService {
     return this.sinPassword(guardado);
   }
 
-  async findAll(): Promise<UserSinPassword[]> {
-    const usuarios = await this.usersRepository.find();
-    return usuarios.map((u) => this.sinPassword(u));
+  async findAll(
+    pagination: { page?: number; limit?: number } = {},
+  ): Promise<PaginatedResult<UserSinPassword>> {
+    const page = pagination.page ?? 1;
+    const limit = pagination.limit ?? 20;
+
+    const [usuarios, total] = await this.usersRepository.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    return {
+      data: usuarios.map((u) => this.sinPassword(u)),
+      total,
+      page,
+      limit,
+    };
   }
 
   async findOne(id: number): Promise<UserSinPassword> {

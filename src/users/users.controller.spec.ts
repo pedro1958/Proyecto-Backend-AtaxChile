@@ -31,7 +31,7 @@ describe('UsersController', () => {
         {
           provide: UsersService,
           useValue: {
-            findAll: jest.fn().mockResolvedValue([mockUser]),
+            findAll: jest.fn().mockResolvedValue({ data: [mockUser], total: 1, page: 1, limit: 20 }),
             findPerfil: jest.fn().mockResolvedValue({
               nombre: mockUser.nombre,
               email: mockUser.email,
@@ -64,10 +64,11 @@ describe('UsersController', () => {
   })
 
   describe('findAll', () => {
-    it('debe llamar a service.findAll y retornar lista', async () => {
+    it('debe llamar a service.findAll y retornar resultado paginado', async () => {
       const result = await controller.findAll()
       expect(service.findAll).toHaveBeenCalled()
-      expect(result).toHaveLength(1)
+      expect(result.data).toHaveLength(1)
+      expect(result.total).toBe(1)
     })
   })
 

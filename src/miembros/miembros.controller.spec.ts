@@ -33,6 +33,13 @@ const mockMiembro: Miembro = {
   updatedAt: new Date(),
 }
 
+const mockPaginatedResult = {
+  data: [mockMiembro],
+  total: 1,
+  page: 1,
+  limit: 20,
+}
+
 describe('MiembrosController', () => {
   let controller: MiembrosController
   let service: jest.Mocked<MiembrosService>
@@ -45,7 +52,7 @@ describe('MiembrosController', () => {
           provide: MiembrosService,
           useValue: {
             create: jest.fn().mockResolvedValue(mockMiembro),
-            findAll: jest.fn().mockResolvedValue([mockMiembro]),
+            findAll: jest.fn().mockResolvedValue(mockPaginatedResult),
             findOne: jest.fn().mockResolvedValue(mockMiembro),
             update: jest.fn().mockResolvedValue(mockMiembro),
             updateEstado: jest.fn().mockResolvedValue({
@@ -92,19 +99,20 @@ describe('MiembrosController', () => {
     it('debe llamar a service.findAll sin filtro cuando no hay query', async () => {
       await controller.findAll()
 
-      expect(service.findAll).toHaveBeenCalledWith(undefined)
+      expect(service.findAll).toHaveBeenCalledWith(undefined, undefined)
     })
 
     it('debe llamar a service.findAll con el estado filtrado', async () => {
       await controller.findAll(EstadoSocio.ACTIVO)
 
-      expect(service.findAll).toHaveBeenCalledWith(EstadoSocio.ACTIVO)
+      expect(service.findAll).toHaveBeenCalledWith(EstadoSocio.ACTIVO, undefined)
     })
 
-    it('debe retornar lista de miembros', async () => {
+    it('debe retornar resultado paginado con data de miembros', async () => {
       const result = await controller.findAll()
 
-      expect(result).toEqual([mockMiembro])
+      expect(result.data).toEqual([mockMiembro])
+      expect(result.total).toBe(1)
     })
   })
 

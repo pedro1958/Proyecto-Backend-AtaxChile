@@ -1,7 +1,7 @@
 import { ConflictException, NotFoundException } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
 import { getRepositoryToken } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { DataSource, Repository } from 'typeorm'
 import { Miembro, EstadoSocio, EstadoCivil } from './entities/miembro.entity'
 import { MiembrosService } from './miembros.service'
 import { CreateMiembroDto } from './dto/create-miembro.dto'
@@ -43,6 +43,7 @@ const createDto: CreateMiembroDto = {
 describe('MiembrosService', () => {
   let service: MiembrosService
   let repo: jest.Mocked<Repository<Miembro>>
+  let dataSource: { transaction: jest.Mock }
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -54,8 +55,15 @@ describe('MiembrosService', () => {
             findOneBy: jest.fn(),
             findOne: jest.fn(),
             find: jest.fn(),
+            findAndCount: jest.fn(),
             create: jest.fn(),
             save: jest.fn(),
+          },
+        },
+        {
+          provide: DataSource,
+          useValue: {
+            transaction: jest.fn(),
           },
         },
       ],
@@ -63,6 +71,7 @@ describe('MiembrosService', () => {
 
     service = module.get<MiembrosService>(MiembrosService)
     repo = module.get(getRepositoryToken(Miembro))
+    dataSource = module.get(DataSource)
   })
 
   it('should be defined', () => {
@@ -97,42 +106,54 @@ describe('MiembrosService', () => {
 
   describe('findAll', () => {
     it('debe retornar lista de miembros con relaciones', async () => {
-      repo.find.mockResolvedValue([mockMiembro])
+      repo.findAndCount.mockResolvedValue([[mockMiembro], 1])
 
       const result = await service.findAll()
 
-      expect(result).toHaveLength(1)
-      expect(repo.find).toHaveBeenCalledWith(
+      expect(result.data).toHaveLength(1)
+      expect(result.total).toBe(1)
+      expect(repo.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({ relations: ['region', 'comuna', 'tipoAtaxia'] }),
       )
     })
 
     it('debe filtrar por estado cuando se provee', async () => {
-      repo.find.mockResolvedValue([mockMiembro])
+      repo.findAndCount.mockResolvedValue([[mockMiembro], 1])
 
       await service.findAll(EstadoSocio.ACTIVO)
 
-      expect(repo.find).toHaveBeenCalledWith(
+      expect(repo.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({ where: { estado: EstadoSocio.ACTIVO } }),
       )
     })
 
     it('debe retornar todos sin filtro cuando no se provee estado', async () => {
-      repo.find.mockResolvedValue([mockMiembro])
+      repo.findAndCount.mockResolvedValue([[mockMiembro], 1])
 
       await service.findAll()
 
-      expect(repo.find).toHaveBeenCalledWith(
+      expect(repo.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({ where: {} }),
       )
     })
 
     it('debe retornar lista vacía si no hay miembros', async () => {
-      repo.find.mockResolvedValue([])
+      repo.findAndCount.mockResolvedValue([[], 0])
 
       const result = await service.findAll()
 
-      expect(result).toHaveLength(0)
+      expect(result.data).toHaveLength(0)
+      expect(result.total).toBe(0)
+    })
+
+    it('debe aplicar skip y take según la paginación', async () => {
+      repo.findAndCount.mockResolvedValue([[mockMiembro], 1])
+
+      await service.findAll(undefined, { page: 2, limit: 10 })
+
+      expect(repo.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 10, take: 10 }),
+      )
     })
   })
 
@@ -208,22 +229,32 @@ describe('MiembrosService', () => {
   })
 
   describe('vincularUsuario', () => {
+    let mockManager: { findOneBy: jest.Mock; save: jest.Mock }
+
+    beforeEach(() => {
+      mockManager = {
+        findOneBy: jest.fn(),
+        save: jest.fn(),
+      }
+      dataSource.transaction.mockImplementation(async (cb) => cb(mockManager))
+    })
+
     it('debe vincular el userId al miembro', async () => {
-      repo.findOneBy
+      mockManager.findOneBy
         .mockResolvedValueOnce({ ...mockMiembro, userId: null }) // miembro encontrado
         .mockResolvedValueOnce(null)                              // userId no vinculado a otro
-      repo.save.mockImplementation(async (m) => m as Miembro)
+      mockManager.save.mockImplementation(async (m) => m as Miembro)
 
       const result = await service.vincularUsuario(1, 10)
 
       expect(result.userId).toBe(10)
-      expect(repo.save).toHaveBeenCalledWith(
+      expect(mockManager.save).toHaveBeenCalledWith(
         expect.objectContaining({ userId: 10 }),
       )
     })
 
     it('debe lanzar NotFoundException si el miembro no existe', async () => {
-      repo.findOneBy.mockResolvedValue(null)
+      mockManager.findOneBy.mockResolvedValue(null)
 
       await expect(service.vincularUsuario(99, 10)).rejects.toThrow(
         NotFoundException,
@@ -232,7 +263,7 @@ describe('MiembrosService', () => {
 
     it('debe lanzar ConflictException si el userId ya está vinculado a otro miembro', async () => {
       const otroMiembro: Miembro = { ...mockMiembro, id: 2, userId: 10 }
-      repo.findOneBy
+      mockManager.findOneBy
         .mockResolvedValueOnce({ ...mockMiembro, id: 1 }) // miembro id=1 encontrado
         .mockResolvedValueOnce(otroMiembro)               // userId ya vinculado a id=2
 
@@ -241,7 +272,7 @@ describe('MiembrosService', () => {
 
     it('debe usar el mensaje correcto para vinculación duplicada', async () => {
       const otroMiembro: Miembro = { ...mockMiembro, id: 2, userId: 10 }
-      repo.findOneBy
+      mockManager.findOneBy
         .mockResolvedValueOnce({ ...mockMiembro, id: 1 })
         .mockResolvedValueOnce(otroMiembro)
 
@@ -252,10 +283,10 @@ describe('MiembrosService', () => {
 
     it('debe permitir re-vincular el mismo usuario al mismo miembro', async () => {
       // userId=10 ya está vinculado al miembro id=1 — se permite (idempotente)
-      repo.findOneBy
+      mockManager.findOneBy
         .mockResolvedValueOnce({ ...mockMiembro, id: 1, userId: 10 })
         .mockResolvedValueOnce({ ...mockMiembro, id: 1, userId: 10 }) // mismo id
-      repo.save.mockImplementation(async (m) => m as Miembro)
+      mockManager.save.mockImplementation(async (m) => m as Miembro)
 
       const result = await service.vincularUsuario(1, 10)
 

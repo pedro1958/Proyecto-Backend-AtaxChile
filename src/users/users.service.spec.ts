@@ -51,6 +51,8 @@ describe('UsersService', () => {
           useValue: {
             findOneBy: jest.fn(),
             find: jest.fn(),
+            findAndCount: jest.fn(),
+            count: jest.fn().mockResolvedValue(1),
             create: jest.fn(),
             save: jest.fn(),
           },
@@ -127,21 +129,23 @@ describe('UsersService', () => {
   })
 
   describe('findAll', () => {
-    it('debe retornar lista de usuarios sin password', async () => {
-      repo.find.mockResolvedValue([mockUser])
+    it('debe retornar lista paginada de usuarios sin password', async () => {
+      repo.findAndCount.mockResolvedValue([[mockUser], 1])
 
       const result = await service.findAll()
 
-      expect(result).toHaveLength(1)
-      expect(result[0]).not.toHaveProperty('password')
+      expect(result.data).toHaveLength(1)
+      expect(result.total).toBe(1)
+      expect(result.data[0]).not.toHaveProperty('password')
     })
 
     it('debe retornar lista vacía si no hay usuarios', async () => {
-      repo.find.mockResolvedValue([])
+      repo.findAndCount.mockResolvedValue([[], 0])
 
       const result = await service.findAll()
 
-      expect(result).toHaveLength(0)
+      expect(result.data).toHaveLength(0)
+      expect(result.total).toBe(0)
     })
   })
 

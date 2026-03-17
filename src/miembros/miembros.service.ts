@@ -4,17 +4,19 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { DataSource, Repository } from 'typeorm'
 import { Miembro, EstadoSocio } from './entities/miembro.entity'
 import { CreateMiembroDto } from './dto/create-miembro.dto'
 import { UpdateMiembroDto } from './dto/update-miembro.dto'
 import { UpdateEstadoDto } from './dto/update-estado.dto'
+import { PaginatedResult } from '../common/types/response.types'
 
 @Injectable()
 export class MiembrosService {
   constructor(
     @InjectRepository(Miembro)
     private readonly miembrosRepository: Repository<Miembro>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(dto: CreateMiembroDto): Promise<Miembro> {
@@ -29,13 +31,23 @@ export class MiembrosService {
     return this.miembrosRepository.save(miembro)
   }
 
-  async findAll(estado?: EstadoSocio): Promise<Miembro[]> {
+  async findAll(
+    estado?: EstadoSocio,
+    pagination: { page?: number; limit?: number } = {},
+  ): Promise<PaginatedResult<Miembro>> {
+    const page = pagination.page ?? 1
+    const limit = pagination.limit ?? 20
     const where = estado ? { estado } : {}
-    return this.miembrosRepository.find({
+
+    const [data, total] = await this.miembrosRepository.findAndCount({
       where,
       relations: ['region', 'comuna', 'tipoAtaxia'],
       order: { nombre: 'ASC' },
+      skip: (page - 1) * limit,
+      take: limit,
     })
+
+    return { data, total, page, limit }
   }
 
   async findOne(id: number): Promise<Miembro> {
@@ -63,14 +75,16 @@ export class MiembrosService {
   }
 
   async vincularUsuario(id: number, userId: number): Promise<Miembro> {
-    const miembro = await this.miembrosRepository.findOneBy({ id })
-    if (!miembro) throw new NotFoundException('Miembro no encontrado')
+    return this.dataSource.transaction(async (manager) => {
+      const miembro = await manager.findOneBy(Miembro, { id })
+      if (!miembro) throw new NotFoundException('Miembro no encontrado')
 
-    const yaVinculado = await this.miembrosRepository.findOneBy({ userId })
-    if (yaVinculado && yaVinculado.id !== id)
-      throw new ConflictException('Este usuario ya está vinculado a otro miembro')
+      const yaVinculado = await manager.findOneBy(Miembro, { userId })
+      if (yaVinculado && yaVinculado.id !== id)
+        throw new ConflictException('Este usuario ya está vinculado a otro miembro')
 
-    miembro.userId = userId
-    return this.miembrosRepository.save(miembro)
+      miembro.userId = userId
+      return manager.save(miembro)
+    })
   }
 }

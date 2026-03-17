@@ -10,6 +10,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common'
 import {
@@ -28,6 +29,7 @@ import { Public } from '../auth/decorators/public.decorator'
 import { Roles } from '../auth/decorators/roles.decorator'
 import { SelfGuard } from '../auth/guards/self.guard'
 import { Rol } from './entities/user.entity'
+import { PaginationDto } from '../common/dto/pagination.dto'
 
 @ApiTags('Usuarios')
 @ApiBearerAuth()
@@ -38,10 +40,10 @@ export class UsersController {
   @Get()
   @Roles(Rol.SUPERADMIN, Rol.ADMIN)
   @ApiOperation({ summary: 'Listar todos los usuarios administrativos' })
-  @ApiResponse({ status: 200, description: 'Lista de usuarios' })
+  @ApiResponse({ status: 200, description: 'Lista paginada de usuarios' })
   @ApiResponse({ status: 403, description: 'Sin permisos (requiere superadmin o admin)' })
-  findAll() {
-    return this.usersService.findAll()
+  findAll(@Query() pagination?: PaginationDto) {
+    return this.usersService.findAll(pagination)
   }
 
   @Public()

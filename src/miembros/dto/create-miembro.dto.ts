@@ -7,6 +7,9 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Matches,
+  MaxLength,
+  MinLength,
 } from 'class-validator';
 import {
   IsRutValido,
@@ -26,6 +29,8 @@ export class CreateMiembroDto {
   @ApiProperty({ example: 'María González' })
   @IsString()
   @IsNotEmpty()
+  @MinLength(2)
+  @MaxLength(150)
   nombre: string;
 
   @ApiPropertyOptional({
@@ -44,16 +49,20 @@ export class CreateMiembroDto {
   @ApiPropertyOptional({ example: 'Profesora' })
   @IsOptional()
   @IsString()
+  @MinLength(2)
+  @MaxLength(100)
   profesion?: string;
 
   @ApiPropertyOptional({ example: '+56912345678' })
   @IsOptional()
   @IsString()
+  @Matches(/^\+?[\d\s\-()+]{7,20}$/, { message: 'Formato de teléfono inválido' })
   telefono?: string;
 
   @ApiPropertyOptional({ example: '+56987654321' })
   @IsOptional()
   @IsString()
+  @Matches(/^\+?[\d\s\-()+]{7,20}$/, { message: 'Formato de teléfono inválido' })
   celular?: string;
 
   @ApiPropertyOptional({ example: 'maria@correo.cl' })
@@ -64,6 +73,8 @@ export class CreateMiembroDto {
   @ApiPropertyOptional({ example: 'Av. Providencia 1234' })
   @IsOptional()
   @IsString()
+  @MinLength(5)
+  @MaxLength(255)
   direccion?: string;
 
   @ApiPropertyOptional({
