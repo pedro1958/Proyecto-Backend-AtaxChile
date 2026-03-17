@@ -34,13 +34,17 @@ El sistema permite:
 - Gestión opcional de membresías o cuotas.
 - Auditoría de acciones relevantes.
 
+El sistema contempla adicionalmente:
+
+- Diagnóstico clínico estructurado por miembro (tipo de ataxia confirmado, institución, médico tratante).
+- Historial de evaluaciones funcionales periódicas (nivel de movilidad, puntuación SARA, síntomas).
+
 El sistema NO contempla:
 
-- Ficha médica detallada.
-- Registro de tratamientos.
-- Registro de médicos.
-- Evolución clínica.
-- Prescripciones médicas.
+- Ficha médica completa.
+- Registro de tratamientos o prescripciones médicas.
+- Registro de médicos como entidad independiente.
+- Telemedicina o comunicación médico-paciente.
 
 ---
 
@@ -369,6 +373,59 @@ Filtro disponible en `GET /miembros`:
 ```
 GET /miembros?estado=activo|renunciado|suspendido|fallecido
 ```
+
+---
+
+## 16.5 Endpoints de Diagnóstico Clínico
+
+Cada miembro puede tener **un único** diagnóstico clínico estructurado. Rutas anidadas bajo `/miembros/:miembroId/diagnostico`.
+
+| Método | Ruta | Roles | Descripción |
+| ------ | ---- | ----- | ----------- |
+| `POST` | `/miembros/:miembroId/diagnostico` | `admin`, `secretario` | Crea el diagnóstico del miembro. Falla con 409 si ya existe uno. |
+| `GET` | `/miembros/:miembroId/diagnostico` | `admin`, `secretario` | Retorna el diagnóstico con relación `tipoAtaxia`. Falla con 404 si no existe. |
+| `PATCH` | `/miembros/:miembroId/diagnostico` | `admin`, `secretario` | Actualiza campos del diagnóstico existente. |
+
+**Enum `ConfirmacionDiagnostico`:**
+
+| Valor | Descripción |
+|---|---|
+| `genetico` | Confirmado por prueba genética |
+| `clinico` | Confirmado por evaluación clínica |
+| `probable` | Diagnóstico presuntivo, sin confirmación formal |
+
+---
+
+## 16.6 Endpoints de Evaluación Funcional (Append-Only)
+
+Historial de evaluaciones periódicas del estado funcional del miembro. **No se permite editar ni eliminar registros** — la inmutabilidad del historial clínico es un requisito de negocio. Rutas anidadas bajo `/miembros/:miembroId/evaluaciones`.
+
+| Método | Ruta | Roles | Descripción |
+| ------ | ---- | ----- | ----------- |
+| `POST` | `/miembros/:miembroId/evaluaciones` | `admin`, `secretario` | Registra una nueva evaluación. Captura automáticamente `registradoPorId` del usuario autenticado. |
+| `GET` | `/miembros/:miembroId/evaluaciones` | `admin`, `secretario` | Retorna el historial completo ordenado por fecha DESC. |
+| `GET` | `/miembros/:miembroId/evaluaciones/ultima` | `admin`, `secretario` | Retorna la evaluación más reciente. Falla con 404 si no hay ninguna. |
+
+**Enum `NivelMovilidad`:**
+
+| Valor | Descripción |
+|---|---|
+| `ambulatorio_independiente` | Camina sin apoyo |
+| `ambulatorio_con_apoyo` | Camina con bastón, andador u otro apoyo |
+| `silla_de_ruedas_parcial` | Usa silla de ruedas parte del tiempo |
+| `silla_de_ruedas_permanente` | Usa silla de ruedas de forma permanente |
+| `postrado` | No puede desplazarse |
+
+**Escala SARA** (`puntuacionSara`): valor entre 0 y 40 que cuantifica la severidad de la ataxia (0 = sin alteración, 40 = máxima afectación).
+
+**Por qué append-only:**
+
+| Patrón | Diagnóstico clínico | Evaluación funcional |
+|---|---|---|
+| ¿Se puede corregir? | Sí (PATCH) | No — cada evaluación es una foto en el tiempo |
+| ¿Se puede eliminar? | No | No |
+| Cantidad por miembro | 1 | N (historial) |
+| Propósito | Diagnóstico formal | Seguimiento longitudinal |
 
 ---
 
@@ -713,6 +770,65 @@ export class Member {
 }
 ```
 
+**`DiagnosticoClinico`** — diagnóstico clínico del miembro (relación 1:1 con `Miembro`):
+
+```typescript
+export enum ConfirmacionDiagnostico {
+  GENETICO  = 'genetico',
+  CLINICO   = 'clinico',
+  PROBABLE  = 'probable',
+}
+
+@Entity('diagnosticos_clinicos')
+export class DiagnosticoClinico {
+  @PrimaryGeneratedColumn() id: number;
+  @Column() miembroId: number;
+  @ManyToOne(() => Miembro) @JoinColumn({ name: 'miembroId' }) miembro: Miembro;
+  @Column({ nullable: true }) tipoAtaxiaId: number;
+  @ManyToOne(() => AtaxiaType, { nullable: true }) @JoinColumn({ name: 'tipoAtaxiaId' }) tipoAtaxia: AtaxiaType;
+  @Column({ nullable: true }) subtipo: string;           // "SCA2", "FRDA", etc.
+  @Column({ type: 'varchar', nullable: true }) confirmacion: ConfirmacionDiagnostico;
+  @Column({ nullable: true }) fechaDiagnostico: string;  // ISO date
+  @Column({ nullable: true }) institucion: string;
+  @Column({ nullable: true }) medico: string;
+  @Column({ nullable: true }) observaciones: string;
+  @CreateDateColumn() createdAt: Date;
+  @UpdateDateColumn() updatedAt: Date;
+}
+```
+
+**`EvaluacionFuncional`** — evaluaciones periódicas del estado funcional (append-only):
+
+```typescript
+export enum NivelMovilidad {
+  AMBULATORIO_INDEPENDIENTE  = 'ambulatorio_independiente',
+  AMBULATORIO_CON_APOYO      = 'ambulatorio_con_apoyo',
+  SILLA_DE_RUEDAS_PARCIAL    = 'silla_de_ruedas_parcial',
+  SILLA_DE_RUEDAS_PERMANENTE = 'silla_de_ruedas_permanente',
+  POSTRADO                   = 'postrado',
+}
+
+@Entity('evaluaciones_funcionales')
+export class EvaluacionFuncional {
+  @PrimaryGeneratedColumn() id: number;
+  @Column() miembroId: number;
+  @ManyToOne(() => Miembro) @JoinColumn({ name: 'miembroId' }) miembro: Miembro;
+  @Column() fecha: string;                               // ISO date
+  @Column({ type: 'varchar' }) nivelMovilidad: NivelMovilidad;
+  @Column({ nullable: true }) puntuacionSara: number;   // 0–40
+  @Column({ default: false }) disartria: boolean;
+  @Column({ default: false }) disfagia: boolean;
+  @Column({ default: false }) nistagmo: boolean;
+  @Column({ default: false }) tieneCuidador: boolean;
+  @Column({ nullable: true }) nombreCuidador: string;
+  @Column({ nullable: true }) observaciones: string;
+  @Column() registradoPorId: number;                     // FK al user que registró
+  @ManyToOne(() => User, { nullable: true }) @JoinColumn({ name: 'registradoPorId' }) registradoPor: User;
+  @CreateDateColumn() createdAt: Date;
+  // Sin @UpdateDateColumn — append-only, no se modifica jamás
+}
+```
+
 **Reglas:**
 - Las tablas `users` y `members` son independientes. No usar herencia ni tabla única.
 - `members.comunaId` referencia a `comunas.id` — la región se obtiene a través de la relación `comuna → region`.
@@ -961,6 +1077,25 @@ src/
 │   ├── ataxia-types.controller.ts     # GET /ataxia-types, POST, PATCH, PATCH /:id/status
 │   ├── ataxia-types.service.ts
 │   └── ataxia-types.module.ts
+│
+├── diagnostico-clinico/            # Diagnóstico clínico del miembro (1:1, mutable)
+│   ├── dto/
+│   │   ├── create-diagnostico-clinico.dto.ts  # tipoAtaxiaId?, subtipo?, confirmacion?, fechaDiagnostico?, etc.
+│   │   └── update-diagnostico-clinico.dto.ts  # PartialType(CreateDiagnosticoClinicoDto)
+│   ├── entities/
+│   │   └── diagnostico-clinico.entity.ts      # ConfirmacionDiagnostico enum; 1:1 con Miembro
+│   ├── diagnostico-clinico.controller.ts      # POST/GET/PATCH /miembros/:miembroId/diagnostico
+│   ├── diagnostico-clinico.service.ts         # create (409 si existe), findByMiembro, update
+│   └── diagnostico-clinico.module.ts
+│
+├── evaluacion-funcional/           # Historial funcional del miembro (append-only)
+│   ├── dto/
+│   │   └── create-evaluacion-funcional.dto.ts  # fecha, nivelMovilidad, puntuacionSara (0-40), síntomas
+│   ├── entities/
+│   │   └── evaluacion-funcional.entity.ts      # NivelMovilidad enum; sin @UpdateDateColumn
+│   ├── evaluacion-funcional.controller.ts      # POST/GET/GET-ultima /miembros/:miembroId/evaluaciones
+│   ├── evaluacion-funcional.service.ts         # create, findAllByMiembro, findUltimaByMiembro — sin update/delete
+│   └── evaluacion-funcional.module.ts
 │
 ├── stats/                          # Estadísticas agregadas (solo lectura)
 │   ├── stats.controller.ts

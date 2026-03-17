@@ -9,7 +9,9 @@ REST API para AtaxChile construida con **NestJS + TypeScript + TypeORM + Postgre
 **Separación de dominios clave:**
 
 - `users` — usuarios administrativos del sistema (staff, directivos). Poseen rol y credenciales de acceso.
-- `members` — socios de la agrupación. Entidad independiente, sin acceso al sistema por defecto.
+- `miembros` — socios de la agrupación. Entidad independiente, sin acceso al sistema por defecto.
+- `diagnostico-clinico` — diagnóstico clínico del miembro (1:1, mutable). Incluye tipo de ataxia, subtipo, confirmación, institución y médico.
+- `evaluacion-funcional` — evaluaciones periódicas de estado funcional (append-only, nunca se editan ni eliminan). Incluye nivel de movilidad, puntuación SARA y síntomas.
 
 ## Documentación de Referencia
 
@@ -50,8 +52,10 @@ src/
 ├── auth/                 # Autenticación JWT + guards de roles
 ├── users/                # Usuarios administrativos (staff/directivos)
 ├── geo/                  # Datos de referencia: regiones y comunas de Chile
-├── members/              # Socios de la agrupación (referencia comunaId)
+├── miembros/             # Socios de la agrupación (referencia comunaId)
 ├── ataxia-types/         # Catálogo controlado de tipos de ataxia
+├── diagnostico-clinico/  # Diagnóstico clínico del miembro (1:1, mutable)
+├── evaluacion-funcional/ # Historial funcional del miembro (append-only)
 ├── stats/                # Estadísticas agregadas
 ├── audit/                # Registro de auditoría inmutable
 └── common/               # Filtros, interceptors, pipes compartidos
@@ -90,6 +94,10 @@ Controller → Service → Repository (TypeORM Entity)
   - `tipoRepresentacion` — enum `TipoRepresentacion`: `padre_madre`, `conyuge`, `hijo_hija`, `tutor_legal`, `cuidador`, `otro`. Solo aplica cuando `esRepresentante = true`.
   - `representado` es una relación auto-referencial (`Member → Member`); si la persona representada no está en el sistema se usan los campos de texto `representadoNombre` y `representadoRut`.
   - Los representantes se excluyen de las estadísticas de diagnóstico de ataxia. El filtro `GET /members?esRepresentante=true|false` permite listarlos separadamente.
+- **Diagnóstico clínico** (`diagnostico-clinico`): Cada miembro puede tener exactamente un diagnóstico clínico. Rutas anidadas bajo `/miembros/:miembroId/diagnostico`. Operaciones disponibles: `POST` (crear, falla con 409 si ya existe), `GET` (obtener con relación `tipoAtaxia`), `PATCH` (actualizar campos del diagnóstico). El servicio valida que el `miembroId` exista antes de crear.
+
+- **Evaluación funcional** (`evaluacion-funcional`): Historial append-only de evaluaciones periódicas. Rutas anidadas bajo `/miembros/:miembroId/evaluaciones`. Operaciones: `POST` (registrar nueva evaluación), `GET` (listar historial ordenado por fecha DESC), `GET /ultima` (evaluación más reciente). **CRÍTICO — no implementar UPDATE ni DELETE**: el servicio deliberadamente no expone estos métodos; la integridad del historial clínico depende de que los registros sean inmutables una vez guardados. El campo `registradoPorId` se captura del usuario autenticado mediante `@CurrentUser()`.
+
 - **Recuperación de contraseña**:
   1. `POST /auth/forgot-password` — recibe `email`; busca el usuario, genera token con `crypto.randomBytes(32)`, almacena el **hash** del token y su expiración (1 hora) en los campos `resetPasswordToken` / `resetPasswordExpires` de la entidad `User`; envía email con enlace al frontend (`/reset-password?token=<token-en-claro>`); responde siempre con mensaje genérico sin confirmar si el email existe (previene enumeración de usuarios).
   2. `POST /auth/reset-password` — recibe `token` + `nuevaPassword`; busca usuario por hash del token y verifica que no haya expirado; hashea la nueva contraseña con bcrypt (10 rounds); limpia `resetPasswordToken` y `resetPasswordExpires`; registra el evento en auditoría.

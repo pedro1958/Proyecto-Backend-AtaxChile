@@ -10,6 +10,8 @@ import { AuthModule } from './auth/auth.module'
 import { GeoModule } from './geo/geo.module'
 import { AtaxiaTypesModule } from './ataxia-types/ataxia-types.module'
 import { MiembrosModule } from './miembros/miembros.module'
+import { DiagnosticoClinicoModule } from './diagnostico-clinico/diagnostico-clinico.module'
+import { EvaluacionFuncionalModule } from './evaluacion-funcional/evaluacion-funcional.module'
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard'
 import { RolesGuard } from './auth/guards/roles.guard'
 
@@ -57,6 +59,8 @@ import { RolesGuard } from './auth/guards/roles.guard'
     GeoModule,
     AtaxiaTypesModule,
     MiembrosModule,
+    DiagnosticoClinicoModule,
+    EvaluacionFuncionalModule,
   ],
   controllers: [AppController],
   providers: [
