@@ -5,7 +5,7 @@ import { CreateMiembroDto } from './dto/create-miembro.dto'
 import { UpdateMiembroDto } from './dto/update-miembro.dto'
 import { UpdateEstadoDto } from './dto/update-estado.dto'
 import { VincularUsuarioDto } from './dto/vincular-usuario.dto'
-import { Miembro, EstadoSocio, EstadoCivil } from './entities/miembro.entity'
+import { Miembro, EstadoSocio, EstadoCivil, TipoRepresentacion } from './entities/miembro.entity'
 
 const mockMiembro: Miembro = {
   id: 1,
@@ -24,6 +24,12 @@ const mockMiembro: Miembro = {
   comuna: null,
   tipoAtaxiaId: 1,
   tipoAtaxia: null,
+  esRepresentante: false,
+  tipoRepresentacion: null,
+  representadoId: null,
+  representado: null,
+  representadoNombre: null,
+  representadoRut: null,
   estado: EstadoSocio.ACTIVO,
   fechaInscripcion: '2024-01-15',
   fechaCambioEstado: null,

@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsBoolean,
   IsDateString,
   IsEmail,
   IsEnum,
@@ -10,12 +11,13 @@ import {
   Matches,
   MaxLength,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 import {
   IsRutValido,
   TransformRut,
 } from '../../common/validators/rut.validator';
-import { EstadoCivil } from '../entities/miembro.entity';
+import { EstadoCivil, TipoRepresentacion } from '../entities/miembro.entity';
 
 export class CreateMiembroDto {
   @ApiProperty({
@@ -97,6 +99,33 @@ export class CreateMiembroDto {
   @IsOptional()
   @IsInt()
   tipoAtaxiaId?: number;
+
+  @ApiPropertyOptional({ default: false, description: 'false = paciente con ataxia, true = representante (familiar/tutor/cuidador)' })
+  @IsOptional()
+  @IsBoolean()
+  esRepresentante?: boolean;
+
+  @ApiPropertyOptional({ enum: TipoRepresentacion, description: 'Obligatorio si esRepresentante = true' })
+  @ValidateIf((o) => o.esRepresentante === true)
+  @IsNotEmpty()
+  @IsEnum(TipoRepresentacion)
+  tipoRepresentacion?: TipoRepresentacion;
+
+  @ApiPropertyOptional({ description: 'ID del miembro representado (si ya está registrado en el sistema)' })
+  @IsOptional()
+  @IsInt()
+  representadoId?: number;
+
+  @ApiPropertyOptional({ description: 'Nombre de la persona representada (si no está registrada)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  representadoNombre?: string;
+
+  @ApiPropertyOptional({ example: '12345678-9', description: 'RUT de la persona representada (si no está registrada)' })
+  @IsOptional()
+  @IsString()
+  representadoRut?: string;
 
   @ApiProperty({
     example: '2024-01-15',

@@ -27,6 +27,15 @@ export enum EstadoCivil {
   DIVORCIADO = 'divorciado',
 }
 
+export enum TipoRepresentacion {
+  PADRE_MADRE = 'padre_madre',
+  CONYUGE = 'conyuge',
+  HIJO_HIJA = 'hijo_hija',
+  TUTOR_LEGAL = 'tutor_legal',
+  CUIDADOR = 'cuidador',
+  OTRO = 'otro',
+}
+
 @Entity('miembros')
 export class Miembro {
   @PrimaryGeneratedColumn()
@@ -75,6 +84,26 @@ export class Miembro {
   @ManyToOne(() => Comuna, { nullable: true, eager: false })
   @JoinColumn({ name: 'comunaId' })
   comuna: Comuna | null
+
+  // ── Representación ────────────────────────────────────────────────────────
+  @Column({ default: false })
+  esRepresentante: boolean
+
+  @Column({ type: 'varchar', nullable: true })
+  tipoRepresentacion: TipoRepresentacion | null
+
+  @Column({ nullable: true })
+  representadoId: number | null
+
+  @ManyToOne(() => Miembro, { nullable: true, eager: false })
+  @JoinColumn({ name: 'representadoId' })
+  representado: Miembro | null
+
+  @Column({ type: 'varchar', nullable: true })
+  representadoNombre: string | null
+
+  @Column({ type: 'varchar', nullable: true })
+  representadoRut: string | null
 
   // ── Diagnóstico ───────────────────────────────────────────────────────────
   @Column({ nullable: true })

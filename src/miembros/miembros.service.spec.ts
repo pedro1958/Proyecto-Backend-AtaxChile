@@ -1,8 +1,8 @@
-import { ConflictException, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
 import { getRepositoryToken } from '@nestjs/typeorm'
 import { DataSource, Repository } from 'typeorm'
-import { Miembro, EstadoSocio, EstadoCivil } from './entities/miembro.entity'
+import { Miembro, EstadoSocio, EstadoCivil, TipoRepresentacion } from './entities/miembro.entity'
 import { MiembrosService } from './miembros.service'
 import { CreateMiembroDto } from './dto/create-miembro.dto'
 import { UpdateMiembroDto } from './dto/update-miembro.dto'
@@ -25,6 +25,12 @@ const mockMiembro: Miembro = {
   comuna: null,
   tipoAtaxiaId: 1,
   tipoAtaxia: null,
+  esRepresentante: false,
+  tipoRepresentacion: null,
+  representadoId: null,
+  representado: null,
+  representadoNombre: null,
+  representadoRut: null,
   estado: EstadoSocio.ACTIVO,
   fechaInscripcion: '2024-01-15',
   fechaCambioEstado: null,
@@ -101,6 +107,82 @@ describe('MiembrosService', () => {
         'Ya existe un miembro con este RUT',
       )
       expect(repo.save).not.toHaveBeenCalled()
+    })
+
+    describe('representante', () => {
+      const dtoRepresentante = {
+        rut: '98765432-1',
+        nombre: 'Pedro Aros',
+        fechaInscripcion: '2024-01-15',
+        esRepresentante: true,
+        tipoRepresentacion: TipoRepresentacion.PADRE_MADRE,
+      }
+
+      it('debe crear representante con representadoId válido', async () => {
+        const mockRepresentante = { ...mockMiembro, id: 2, esRepresentante: true, tipoAtaxiaId: null }
+        repo.findOneBy
+          .mockResolvedValueOnce(null)          // RUT no duplicado
+          .mockResolvedValueOnce(mockMiembro)   // representadoId existe
+        repo.create.mockReturnValue(mockRepresentante)
+        repo.save.mockResolvedValue(mockRepresentante)
+
+        const result = await service.create({ ...dtoRepresentante, representadoId: 1 })
+
+        expect(result.esRepresentante).toBe(true)
+        expect(repo.save).toHaveBeenCalled()
+      })
+
+      it('debe crear representante con nombre y RUT externo (sin representadoId)', async () => {
+        const mockRepresentante = { ...mockMiembro, id: 2, esRepresentante: true, tipoAtaxiaId: null }
+        repo.findOneBy.mockResolvedValueOnce(null) // RUT no duplicado
+        repo.create.mockReturnValue(mockRepresentante)
+        repo.save.mockResolvedValue(mockRepresentante)
+
+        const result = await service.create({
+          ...dtoRepresentante,
+          representadoNombre: 'Ana González',
+          representadoRut: '11111111-1',
+        })
+
+        expect(result).toEqual(mockRepresentante)
+        expect(repo.save).toHaveBeenCalled()
+      })
+
+      it('debe lanzar BadRequestException si representante tiene tipoAtaxiaId', async () => {
+        repo.findOneBy.mockResolvedValueOnce(null)
+
+        await expect(
+          service.create({ ...dtoRepresentante, tipoAtaxiaId: 1, representadoId: 1 }),
+        ).rejects.toThrow(BadRequestException)
+        await expect(
+          service.create({ ...dtoRepresentante, tipoAtaxiaId: 1, representadoId: 1 }),
+        ).rejects.toThrow('Un representante no puede tener tipoAtaxiaId')
+        expect(repo.save).not.toHaveBeenCalled()
+      })
+
+      it('debe lanzar BadRequestException si no se informa representado', async () => {
+        repo.findOneBy.mockResolvedValueOnce(null)
+
+        await expect(service.create(dtoRepresentante)).rejects.toThrow(BadRequestException)
+        await expect(service.create(dtoRepresentante)).rejects.toThrow(
+          'Debe informar representadoId o representadoNombre y representadoRut',
+        )
+        expect(repo.save).not.toHaveBeenCalled()
+      })
+
+      it('debe lanzar NotFoundException si representadoId no existe', async () => {
+        repo.findOneBy
+          .mockResolvedValueOnce(null)  // RUT no duplicado
+          .mockResolvedValueOnce(null)  // representadoId no encontrado
+
+        await expect(
+          service.create({ ...dtoRepresentante, representadoId: 99 }),
+        ).rejects.toThrow(NotFoundException)
+        await expect(
+          service.create({ ...dtoRepresentante, representadoId: 99 }),
+        ).rejects.toThrow('El miembro representado no existe')
+        expect(repo.save).not.toHaveBeenCalled()
+      })
     })
   })
 

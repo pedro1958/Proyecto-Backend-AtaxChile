@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -22,6 +23,25 @@ export class MiembrosService {
   async create(dto: CreateMiembroDto): Promise<Miembro> {
     const existe = await this.miembrosRepository.findOneBy({ rut: dto.rut })
     if (existe) throw new ConflictException('Ya existe un miembro con este RUT')
+
+    if (dto.esRepresentante) {
+      if (dto.tipoAtaxiaId != null) {
+        throw new BadRequestException('Un representante no puede tener tipoAtaxiaId')
+      }
+
+      const tieneRepresentadoId = dto.representadoId != null
+      const tieneRepresentadoTexto = dto.representadoNombre && dto.representadoRut
+      if (!tieneRepresentadoId && !tieneRepresentadoTexto) {
+        throw new BadRequestException(
+          'Debe informar representadoId o representadoNombre y representadoRut',
+        )
+      }
+
+      if (dto.representadoId != null) {
+        const representado = await this.miembrosRepository.findOneBy({ id: dto.representadoId })
+        if (!representado) throw new NotFoundException('El miembro representado no existe')
+      }
+    }
 
     const miembro = this.miembrosRepository.create({
       ...dto,

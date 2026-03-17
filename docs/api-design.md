@@ -70,24 +70,26 @@ Cada miembro debe:
 - Declarar si es **paciente** (tiene ataxia) o **representante** (familiar, tutor o cuidador de una persona con ataxia). El campo `esRepresentante` determina qué campos son obligatorios.
 
 **Campos obligatorios para paciente** (`esRepresentante: false`):
-  - Nombre completo y apellido.
-  - RUT (formato `"12345678-9"`).
-  - Fecha de nacimiento.
-  - Región / comuna.
-  - Tipo de ataxia (`tipoAtaxiaId`).
-  - Estado diagnóstico.
-  - Consentimiento registrado.
+
+- Nombre completo y apellido.
+- RUT (formato `"12345678-9"`).
+- Fecha de nacimiento.
+- Región / comuna.
+- Tipo de ataxia (`tipoAtaxiaId`).
+- Estado diagnóstico.
+- Consentimiento registrado.
 
 **Campos obligatorios para representante** (`esRepresentante: true`):
-  - Nombre completo y apellido.
-  - RUT (formato `"12345678-9"`).
-  - Fecha de nacimiento.
-  - Región / comuna.
-  - Tipo de representación (`tipoRepresentacion`).
-  - Consentimiento registrado.
-  - Al menos uno de:
-    - `representadoId` — UUID de la persona representada si ya está registrada en el sistema.
-    - `representadoNombre` + `representadoRut` — si la persona representada aún no está registrada.
+
+- Nombre completo y apellido.
+- RUT (formato `"12345678-9"`).
+- Fecha de nacimiento.
+- Región / comuna.
+- Tipo de representación (`tipoRepresentacion`).
+- Consentimiento registrado.
+- Al menos uno de:
+  - `representadoId` — UUID de la persona representada si ya está registrada en el sistema.
+  - `representadoNombre` + `representadoRut` — si la persona representada aún no está registrada.
 
 Validaciones obligatorias en backend:
 
@@ -198,12 +200,12 @@ Reglas:
 
 Los roles aplican exclusivamente a **usuarios administrativos** (`users`). Los miembros no poseen rol en el sistema.
 
-| Rol          | Descripción                                                                                 |
-| ------------ | ------------------------------------------------------------------------------------------- |
-| `superadmin` | Gestión completa del sistema, incluida la administración de otros usuarios administrativos. |
-| `admin`      | Administración general: miembros, catálogos, reportes y lectura completa.                   |
-| `secretario` | Gestión de miembros: crear, actualizar y desactivar registros.                              |
-| `tesorero`   | Acceso a membresías y cuotas.                                                               |
+| Rol          | Descripción                                                                                                                                          |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `superadmin` | Gestión completa del sistema, incluida la administración de otros usuarios administrativos.                                                          |
+| `admin`      | Administración general: miembros, catálogos, reportes y lectura completa.                                                                            |
+| `secretario` | Gestión de miembros: crear, actualizar y desactivar registros.                                                                                       |
+| `tesorero`   | Acceso a membresías y cuotas.                                                                                                                        |
 | `usuario`    | Rol por defecto asignado automáticamente al registrarse. Sin acceso a funciones administrativas. El `superadmin` puede elevar el rol posteriormente. |
 
 ### 8.2 Reglas
@@ -297,29 +299,29 @@ Toda API debe estar versionada.
 
 ## 14. Endpoints de Autenticación
 
-| Método | Ruta | Acceso | Descripción |
-| ------ | ---- | ------ | ----------- |
-| `POST` | `/auth/login` | Público | Inicia sesión, retorna `access_token` (15 min) y `refresh_token` (7 días) |
-| `POST` | `/auth/refresh` | Público | Renueva el `access_token` usando el `refresh_token` |
-| `POST` | `/auth/logout` | Autenticado | Invalida el `refresh_token` en BD |
-| `POST` | `/auth/forgot-password` | Público | Solicita recuperación de contraseña por email |
-| `POST` | `/auth/reset-password` | Público | Restablece contraseña con token recibido por email |
-| `POST` | `/auth/change-password` | Autenticado | Cambia contraseña conociendo la actual |
+| Método | Ruta                    | Acceso      | Descripción                                                               |
+| ------ | ----------------------- | ----------- | ------------------------------------------------------------------------- |
+| `POST` | `/auth/login`           | Público     | Inicia sesión, retorna `access_token` (15 min) y `refresh_token` (7 días) |
+| `POST` | `/auth/refresh`         | Público     | Renueva el `access_token` usando el `refresh_token`                       |
+| `POST` | `/auth/logout`          | Autenticado | Invalida el `refresh_token` en BD                                         |
+| `POST` | `/auth/forgot-password` | Público     | Solicita recuperación de contraseña por email                             |
+| `POST` | `/auth/reset-password`  | Público     | Restablece contraseña con token recibido por email                        |
+| `POST` | `/auth/change-password` | Autenticado | Cambia contraseña conociendo la actual                                    |
 
 ---
 
 ## 15. Endpoints de Usuarios Administrativos
 
-| Método | Ruta | Acceso | Descripción |
-| ------ | ---- | ------ | ----------- |
-| `GET` | `/users` | superadmin, admin | Lista todos los usuarios |
-| `GET` | `/users/:id` | Autenticado (propio) | Retorna perfil: `nombre`, `email`, `rol` |
-| `POST` | `/users/register` | Público | Registra nuevo usuario con rol `usuario` por defecto, envía email de activación |
-| `GET` | `/users/activar/:token` | Público | Activa cuenta desde enlace del correo |
-| `PUT` | `/users/:id` | Autenticado (propio) | Modifica `nombre` o `email` — no modifica `rol` |
-| `PATCH` | `/users/:id/rol` | superadmin | Cambia el rol del usuario |
-| `PATCH` | `/users/:id/status` | superadmin | Activa o desactiva la cuenta |
-| `DELETE` | `/users/:id` | superadmin | Eliminación lógica |
+| Método   | Ruta                    | Acceso               | Descripción                                                                     |
+| -------- | ----------------------- | -------------------- | ------------------------------------------------------------------------------- |
+| `GET`    | `/users`                | superadmin, admin    | Lista todos los usuarios                                                        |
+| `GET`    | `/users/:id`            | Autenticado (propio) | Retorna perfil: `nombre`, `email`, `rol`                                        |
+| `POST`   | `/users/register`       | Público              | Registra nuevo usuario con rol `usuario` por defecto, envía email de activación |
+| `GET`    | `/users/activar/:token` | Público              | Activa cuenta desde enlace del correo                                           |
+| `PUT`    | `/users/:id`            | Autenticado (propio) | Modifica `nombre` o `email` — no modifica `rol`                                 |
+| `PATCH`  | `/users/:id/rol`        | superadmin           | Cambia el rol del usuario                                                       |
+| `PATCH`  | `/users/:id/status`     | superadmin           | Activa o desactiva la cuenta                                                    |
+| `DELETE` | `/users/:id`            | superadmin           | Eliminación lógica                                                              |
 
 ---
 
@@ -331,21 +333,21 @@ No se implementa `DELETE` — la eliminación de una región o comuna rompería 
 
 ### Regiones
 
-| Método | Ruta | Acceso | Descripción |
-| ------ | ---- | ------ | ----------- |
-| `GET` | `/geo/regiones` | Autenticado | Lista todas las regiones |
-| `GET` | `/geo/regiones/:id` | Autenticado | Obtiene una región por id |
-| `POST` | `/geo/regiones` | superadmin | Crea una nueva región |
-| `PUT` | `/geo/regiones/:id` | superadmin | Modifica el nombre de una región |
+| Método | Ruta                | Acceso      | Descripción                      |
+| ------ | ------------------- | ----------- | -------------------------------- |
+| `GET`  | `/geo/regiones`     | Autenticado | Lista todas las regiones         |
+| `GET`  | `/geo/regiones/:id` | Autenticado | Obtiene una región por id        |
+| `POST` | `/geo/regiones`     | superadmin  | Crea una nueva región            |
+| `PUT`  | `/geo/regiones/:id` | superadmin  | Modifica el nombre de una región |
 
 ### Comunas
 
-| Método | Ruta | Acceso | Descripción |
-| ------ | ---- | ------ | ----------- |
-| `GET` | `/geo/regiones/:id/comunas` | Autenticado | Lista comunas de una región |
-| `GET` | `/geo/comunas/:id` | Autenticado | Obtiene una comuna por id |
-| `POST` | `/geo/comunas` | superadmin | Crea una nueva comuna |
-| `PUT` | `/geo/comunas/:id` | superadmin | Modifica nombre o región de una comuna |
+| Método | Ruta                        | Acceso      | Descripción                            |
+| ------ | --------------------------- | ----------- | -------------------------------------- |
+| `GET`  | `/geo/regiones/:id/comunas` | Autenticado | Lista comunas de una región            |
+| `GET`  | `/geo/comunas/:id`          | Autenticado | Obtiene una comuna por id              |
+| `POST` | `/geo/comunas`              | superadmin  | Crea una nueva comuna                  |
+| `PUT`  | `/geo/comunas/:id`          | superadmin  | Modifica nombre o región de una comuna |
 
 ### Flujo típico del frontend al crear un miembro
 
@@ -359,14 +361,14 @@ No se implementa `DELETE` — la eliminación de una región o comuna rompería 
 
 ## 16. Endpoints de Miembros
 
-| Método | Ruta | Roles | Descripción |
-| ------ | ---- | ----- | ----------- |
-| `GET` | `/miembros` | `admin`, `secretario`, `tesorero` | Lista socios; acepta filtro `?estado=` |
-| `GET` | `/miembros/:id` | `admin`, `secretario` | Detalle de un socio con relaciones (región, comuna, tipo de ataxia) |
-| `POST` | `/miembros` | `admin`, `secretario` | Registra nuevo socio. El RUT se normaliza y valida automáticamente. |
-| `PATCH` | `/miembros/:id` | `admin`, `secretario` | Actualiza datos del socio. El RUT no se puede modificar. |
-| `PATCH` | `/miembros/:id/estado` | `admin` | Cambia `estado` del socio (`activo` → `renunciado` / `suspendido` / `fallecido`). Registra `fechaCambioEstado` automáticamente. |
-| `PATCH` | `/miembros/:id/vincular-usuario` | `admin` | Vincula una cuenta de sistema (`userId`) al socio. Un `userId` solo puede estar vinculado a un socio a la vez. |
+| Método  | Ruta                             | Roles                             | Descripción                                                                                                                     |
+| ------- | -------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`   | `/miembros`                      | `admin`, `secretario`, `tesorero` | Lista socios; acepta filtro `?estado=`                                                                                          |
+| `GET`   | `/miembros/:id`                  | `admin`, `secretario`             | Detalle de un socio con relaciones (región, comuna, tipo de ataxia)                                                             |
+| `POST`  | `/miembros`                      | `admin`, `secretario`             | Registra nuevo socio. El RUT se normaliza y valida automáticamente.                                                             |
+| `PATCH` | `/miembros/:id`                  | `admin`, `secretario`             | Actualiza datos del socio. El RUT no se puede modificar.                                                                        |
+| `PATCH` | `/miembros/:id/estado`           | `admin`                           | Cambia `estado` del socio (`activo` → `renunciado` / `suspendido` / `fallecido`). Registra `fechaCambioEstado` automáticamente. |
+| `PATCH` | `/miembros/:id/vincular-usuario` | `admin`                           | Vincula una cuenta de sistema (`userId`) al socio. Un `userId` solo puede estar vinculado a un socio a la vez.                  |
 
 Filtro disponible en `GET /miembros`:
 
@@ -380,18 +382,18 @@ GET /miembros?estado=activo|renunciado|suspendido|fallecido
 
 Cada miembro puede tener **un único** diagnóstico clínico estructurado. Rutas anidadas bajo `/miembros/:miembroId/diagnostico`.
 
-| Método | Ruta | Roles | Descripción |
-| ------ | ---- | ----- | ----------- |
-| `POST` | `/miembros/:miembroId/diagnostico` | `admin`, `secretario` | Crea el diagnóstico del miembro. Falla con 409 si ya existe uno. |
-| `GET` | `/miembros/:miembroId/diagnostico` | `admin`, `secretario` | Retorna el diagnóstico con relación `tipoAtaxia`. Falla con 404 si no existe. |
-| `PATCH` | `/miembros/:miembroId/diagnostico` | `admin`, `secretario` | Actualiza campos del diagnóstico existente. |
+| Método  | Ruta                               | Roles                 | Descripción                                                                   |
+| ------- | ---------------------------------- | --------------------- | ----------------------------------------------------------------------------- |
+| `POST`  | `/miembros/:miembroId/diagnostico` | `admin`, `secretario` | Crea el diagnóstico del miembro. Falla con 409 si ya existe uno.              |
+| `GET`   | `/miembros/:miembroId/diagnostico` | `admin`, `secretario` | Retorna el diagnóstico con relación `tipoAtaxia`. Falla con 404 si no existe. |
+| `PATCH` | `/miembros/:miembroId/diagnostico` | `admin`, `secretario` | Actualiza campos del diagnóstico existente.                                   |
 
 **Enum `ConfirmacionDiagnostico`:**
 
-| Valor | Descripción |
-|---|---|
-| `genetico` | Confirmado por prueba genética |
-| `clinico` | Confirmado por evaluación clínica |
+| Valor      | Descripción                                     |
+| ---------- | ----------------------------------------------- |
+| `genetico` | Confirmado por prueba genética                  |
+| `clinico`  | Confirmado por evaluación clínica               |
 | `probable` | Diagnóstico presuntivo, sin confirmación formal |
 
 ---
@@ -400,32 +402,32 @@ Cada miembro puede tener **un único** diagnóstico clínico estructurado. Rutas
 
 Historial de evaluaciones periódicas del estado funcional del miembro. **No se permite editar ni eliminar registros** — la inmutabilidad del historial clínico es un requisito de negocio. Rutas anidadas bajo `/miembros/:miembroId/evaluaciones`.
 
-| Método | Ruta | Roles | Descripción |
-| ------ | ---- | ----- | ----------- |
-| `POST` | `/miembros/:miembroId/evaluaciones` | `admin`, `secretario` | Registra una nueva evaluación. Captura automáticamente `registradoPorId` del usuario autenticado. |
-| `GET` | `/miembros/:miembroId/evaluaciones` | `admin`, `secretario` | Retorna el historial completo ordenado por fecha DESC. |
-| `GET` | `/miembros/:miembroId/evaluaciones/ultima` | `admin`, `secretario` | Retorna la evaluación más reciente. Falla con 404 si no hay ninguna. |
+| Método | Ruta                                       | Roles                 | Descripción                                                                                       |
+| ------ | ------------------------------------------ | --------------------- | ------------------------------------------------------------------------------------------------- |
+| `POST` | `/miembros/:miembroId/evaluaciones`        | `admin`, `secretario` | Registra una nueva evaluación. Captura automáticamente `registradoPorId` del usuario autenticado. |
+| `GET`  | `/miembros/:miembroId/evaluaciones`        | `admin`, `secretario` | Retorna el historial completo ordenado por fecha DESC.                                            |
+| `GET`  | `/miembros/:miembroId/evaluaciones/ultima` | `admin`, `secretario` | Retorna la evaluación más reciente. Falla con 404 si no hay ninguna.                              |
 
 **Enum `NivelMovilidad`:**
 
-| Valor | Descripción |
-|---|---|
-| `ambulatorio_independiente` | Camina sin apoyo |
-| `ambulatorio_con_apoyo` | Camina con bastón, andador u otro apoyo |
-| `silla_de_ruedas_parcial` | Usa silla de ruedas parte del tiempo |
+| Valor                        | Descripción                             |
+| ---------------------------- | --------------------------------------- |
+| `ambulatorio_independiente`  | Camina sin apoyo                        |
+| `ambulatorio_con_apoyo`      | Camina con bastón, andador u otro apoyo |
+| `silla_de_ruedas_parcial`    | Usa silla de ruedas parte del tiempo    |
 | `silla_de_ruedas_permanente` | Usa silla de ruedas de forma permanente |
-| `postrado` | No puede desplazarse |
+| `postrado`                   | No puede desplazarse                    |
 
 **Escala SARA** (`puntuacionSara`): valor entre 0 y 40 que cuantifica la severidad de la ataxia (0 = sin alteración, 40 = máxima afectación).
 
 **Por qué append-only:**
 
-| Patrón | Diagnóstico clínico | Evaluación funcional |
-|---|---|---|
-| ¿Se puede corregir? | Sí (PATCH) | No — cada evaluación es una foto en el tiempo |
-| ¿Se puede eliminar? | No | No |
-| Cantidad por miembro | 1 | N (historial) |
-| Propósito | Diagnóstico formal | Seguimiento longitudinal |
+| Patrón               | Diagnóstico clínico | Evaluación funcional                          |
+| -------------------- | ------------------- | --------------------------------------------- |
+| ¿Se puede corregir?  | Sí (PATCH)          | No — cada evaluación es una foto en el tiempo |
+| ¿Se puede eliminar?  | No                  | No                                            |
+| Cantidad por miembro | 1                   | N (historial)                                 |
+| Propósito            | Diagnóstico formal  | Seguimiento longitudinal                      |
 
 ---
 
@@ -437,22 +439,22 @@ El campo `estadoDiagnostico` (`confirmado` / `presuntivo` / `en_estudio`) perten
 
 No se implementa `DELETE` — si un tipo ya tiene miembros asociados, eliminarlo rompería la FK histórica. Se usa `PATCH /:id/status` para desactivarlo.
 
-| Método | Ruta | Acceso | Descripción |
-| ------ | ---- | ------ | ----------- |
-| `GET` | `/ataxia-types` | Autenticado | Lista tipos activos; acepta filtro `?grupo=` |
-| `GET` | `/ataxia-types/:id` | Autenticado | Detalle de un tipo |
-| `POST` | `/ataxia-types` | `superadmin`, `admin` | Crea un tipo en el catálogo |
-| `PATCH` | `/ataxia-types/:id` | `superadmin`, `admin` | Modifica nombre, grupo o descripción |
-| `PATCH` | `/ataxia-types/:id/status` | `superadmin`, `admin` | Activa o desactiva el tipo (soft delete) |
+| Método  | Ruta                       | Acceso                | Descripción                                  |
+| ------- | -------------------------- | --------------------- | -------------------------------------------- |
+| `GET`   | `/ataxia-types`            | Autenticado           | Lista tipos activos; acepta filtro `?grupo=` |
+| `GET`   | `/ataxia-types/:id`        | Autenticado           | Detalle de un tipo                           |
+| `POST`  | `/ataxia-types`            | `superadmin`, `admin` | Crea un tipo en el catálogo                  |
+| `PATCH` | `/ataxia-types/:id`        | `superadmin`, `admin` | Modifica nombre, grupo o descripción         |
+| `PATCH` | `/ataxia-types/:id/status` | `superadmin`, `admin` | Activa o desactiva el tipo (soft delete)     |
 
 ### Grupos de ataxia (`GrupoAtaxia`)
 
-| Valor | Descripción | Ejemplos clínicos |
-|---|---|---|
-| `hereditaria` | Ataxias de origen genético | Friedreich, SCA1–SCA17, Ataxia-Telangiectasia, AOA1, AOA2, ARSACS, AVED |
-| `adquirida` | Ataxias secundarias a causas externas | MSA-C, alcohólica, paraneoplásica, por gluten, inmunomediada, CANVAS |
-| `idiopatica` | Sin causa identificada | SAOA (ataxia cerebelosa de inicio tardío), esporádica no clasificada |
-| `otra` | Otros tipos o en investigación genética | En investigación, origen combinado |
+| Valor         | Descripción                             | Ejemplos clínicos                                                       |
+| ------------- | --------------------------------------- | ----------------------------------------------------------------------- |
+| `hereditaria` | Ataxias de origen genético              | Friedreich, SCA1–SCA17, Ataxia-Telangiectasia, AOA1, AOA2, ARSACS, AVED |
+| `adquirida`   | Ataxias secundarias a causas externas   | MSA-C, alcohólica, paraneoplásica, por gluten, inmunomediada, CANVAS    |
+| `idiopatica`  | Sin causa identificada                  | SAOA (ataxia cerebelosa de inicio tardío), esporádica no clasificada    |
+| `otra`        | Otros tipos o en investigación genética | En investigación, origen combinado                                      |
 
 ### Flujo típico del frontend al crear un miembro
 
@@ -594,10 +596,10 @@ router.delete('/:id', autenticar, autorizar(1), UsuarioController.eliminar);
 ```typescript
 export enum Rol {
   SUPERADMIN = 'superadmin',
-  ADMIN      = 'admin',
+  ADMIN = 'admin',
   SECRETARIO = 'secretario',
-  TESORERO   = 'tesorero',
-  USUARIO    = 'usuario',         // rol por defecto al registrarse
+  TESORERO = 'tesorero',
+  USUARIO = 'usuario', // rol por defecto al registrarse
 }
 
 @Entity('users')
@@ -645,18 +647,18 @@ export class Comuna {
 ```typescript
 export enum GrupoAtaxia {
   HEREDITARIA = 'hereditaria',
-  ADQUIRIDA   = 'adquirida',
-  IDIOPATICA  = 'idiopatica',
-  OTRA        = 'otra',
+  ADQUIRIDA = 'adquirida',
+  IDIOPATICA = 'idiopatica',
+  OTRA = 'otra',
 }
 
 @Entity('ataxia_types')
 export class AtaxiaType {
   @PrimaryGeneratedColumn() id: number;
-  @Column() nombre: string;                          // "Ataxia de Friedreich"
-  @Column({ type: 'varchar' }) grupo: GrupoAtaxia;   // agrupación para dropdowns y estadísticas
-  @Column({ nullable: true }) descripcion: string;   // descripción opcional para el frontend
-  @Column({ default: true }) activo: boolean;        // soft delete — nunca eliminación física
+  @Column() nombre: string; // "Ataxia de Friedreich"
+  @Column({ type: 'varchar' }) grupo: GrupoAtaxia; // agrupación para dropdowns y estadísticas
+  @Column({ nullable: true }) descripcion: string; // descripción opcional para el frontend
+  @Column({ default: true }) activo: boolean; // soft delete — nunca eliminación física
   @CreateDateColumn() createdAt: Date;
   @UpdateDateColumn() updatedAt: Date;
 }
@@ -666,36 +668,36 @@ export class AtaxiaType {
 
 ```typescript
 export enum EstadoDiagnostico {
-  CONFIRMADO  = 'confirmado',
-  PRESUNTIVO  = 'presuntivo',
-  EN_ESTUDIO  = 'en_estudio',
+  CONFIRMADO = 'confirmado',
+  PRESUNTIVO = 'presuntivo',
+  EN_ESTUDIO = 'en_estudio',
 }
 
 export enum EstadoSocio {
-  ACTIVO      = 'activo',
-  RENUNCIADO  = 'renunciado',
-  SUSPENDIDO  = 'suspendido',
-  FALLECIDO   = 'fallecido',
+  ACTIVO = 'activo',
+  RENUNCIADO = 'renunciado',
+  SUSPENDIDO = 'suspendido',
+  FALLECIDO = 'fallecido',
 }
 
 export enum EstadoCivil {
-  SOLTERO     = 'soltero',
-  SOLTERA     = 'soltera',
-  CASADO      = 'casado',
-  CASADA      = 'casada',
-  VIUDO       = 'viudo',
-  VIUDA       = 'viuda',
-  DIVORCIADO  = 'divorciado',
-  DIVORCIADA  = 'divorciada',
+  SOLTERO = 'soltero',
+  SOLTERA = 'soltera',
+  CASADO = 'casado',
+  CASADA = 'casada',
+  VIUDO = 'viudo',
+  VIUDA = 'viuda',
+  DIVORCIADO = 'divorciado',
+  DIVORCIADA = 'divorciada',
 }
 
 export enum TipoRepresentacion {
-  PADRE_MADRE  = 'padre_madre',   // padre o madre
-  CONYUGE      = 'conyuge',       // cónyuge o conviviente
-  HIJO_HIJA    = 'hijo_hija',
-  TUTOR_LEGAL  = 'tutor_legal',
-  CUIDADOR     = 'cuidador',      // cuidador formal o informal
-  OTRO         = 'otro',
+  PADRE_MADRE = 'padre_madre', // padre o madre
+  CONYUGE = 'conyuge', // cónyuge o conviviente
+  HIJO_HIJA = 'hijo_hija',
+  TUTOR_LEGAL = 'tutor_legal',
+  CUIDADOR = 'cuidador', // cuidador formal o informal
+  OTRO = 'otro',
 }
 
 @Entity('members')
@@ -703,23 +705,23 @@ export class Member {
   @PrimaryGeneratedColumn('uuid') id: string;
 
   // ── Identidad ──────────────────────────────────────────────────
-  @Column({ unique: true }) rut: string;            // formato "12345678-9" (incluye dígito verificador)
+  @Column({ unique: true }) rut: string; // formato "12345678-9" (incluye dígito verificador)
   @Column() nombre: string;
   @Column() apellido: string;
-  @Column({ nullable: true }) sexo: string;         // 'M' | 'F' | 'otro'
+  @Column({ nullable: true }) sexo: string; // 'M' | 'F' | 'otro'
   @Column() fechaNacimiento: Date;
 
   // ── Contacto ───────────────────────────────────────────────────
   @Column({ nullable: true }) email: string;
-  @Column({ nullable: true }) telefono: string;     // teléfono fijo
-  @Column({ nullable: true }) celular: string;      // teléfono móvil
+  @Column({ nullable: true }) telefono: string; // teléfono fijo
+  @Column({ nullable: true }) celular: string; // teléfono móvil
   @Column({ nullable: true }) direccion: string;
 
   // ── Geografía ──────────────────────────────────────────────────
   @Column() comunaId: number;
   @ManyToOne(() => Comuna)
   @JoinColumn({ name: 'comunaId' })
-  comuna: Comuna;                                   // región se obtiene vía comuna → region
+  comuna: Comuna; // región se obtiene vía comuna → region
 
   // ── Datos sociodemográficos ────────────────────────────────────
   @Column({ nullable: true }) profesion: string;
@@ -735,23 +737,23 @@ export class Member {
   @JoinColumn({ name: 'tipoAtaxiaId' })
   tipoAtaxia: AtaxiaType;
   @Column({ type: 'varchar', nullable: true })
-  estadoDiagnostico: EstadoDiagnostico;             // dato del paciente, no del catálogo
+  estadoDiagnostico: EstadoDiagnostico; // dato del paciente, no del catálogo
 
   // ── Representación (solo si esRepresentante = true) ────────────
   @Column({ type: 'varchar', nullable: true })
   tipoRepresentacion: TipoRepresentacion;
 
-  @Column({ nullable: true }) representadoId: string;   // UUID de miembro ya registrado
+  @Column({ nullable: true }) representadoId: string; // UUID de miembro ya registrado
   @ManyToOne(() => Member, { nullable: true })
   @JoinColumn({ name: 'representadoId' })
-  representado: Member;                                  // relación auto-referencial
+  representado: Member; // relación auto-referencial
 
   @Column({ nullable: true }) representadoNombre: string; // si la persona no está registrada
-  @Column({ nullable: true }) representadoRut: string;    // si la persona no está registrada
+  @Column({ nullable: true }) representadoRut: string; // si la persona no está registrada
 
   // ── Estado en la asociación ────────────────────────────────────
   @Column({ type: 'varchar', default: EstadoSocio.ACTIVO })
-  estado: EstadoSocio;                              // activo | renunciado | suspendido | fallecido
+  estado: EstadoSocio; // activo | renunciado | suspendido | fallecido
   @Column() fechaIngreso: Date;
   @Column({ nullable: true }) fechaCambioEstado: Date; // se actualiza automáticamente al cambiar estado
 
@@ -774,9 +776,9 @@ export class Member {
 
 ```typescript
 export enum ConfirmacionDiagnostico {
-  GENETICO  = 'genetico',
-  CLINICO   = 'clinico',
-  PROBABLE  = 'probable',
+  GENETICO = 'genetico',
+  CLINICO = 'clinico',
+  PROBABLE = 'probable',
 }
 
 @Entity('diagnosticos_clinicos')
@@ -785,10 +787,13 @@ export class DiagnosticoClinico {
   @Column() miembroId: number;
   @ManyToOne(() => Miembro) @JoinColumn({ name: 'miembroId' }) miembro: Miembro;
   @Column({ nullable: true }) tipoAtaxiaId: number;
-  @ManyToOne(() => AtaxiaType, { nullable: true }) @JoinColumn({ name: 'tipoAtaxiaId' }) tipoAtaxia: AtaxiaType;
-  @Column({ nullable: true }) subtipo: string;           // "SCA2", "FRDA", etc.
-  @Column({ type: 'varchar', nullable: true }) confirmacion: ConfirmacionDiagnostico;
-  @Column({ nullable: true }) fechaDiagnostico: string;  // ISO date
+  @ManyToOne(() => AtaxiaType, { nullable: true })
+  @JoinColumn({ name: 'tipoAtaxiaId' })
+  tipoAtaxia: AtaxiaType;
+  @Column({ nullable: true }) subtipo: string; // "SCA2", "FRDA", etc.
+  @Column({ type: 'varchar', nullable: true })
+  confirmacion: ConfirmacionDiagnostico;
+  @Column({ nullable: true }) fechaDiagnostico: string; // ISO date
   @Column({ nullable: true }) institucion: string;
   @Column({ nullable: true }) medico: string;
   @Column({ nullable: true }) observaciones: string;
@@ -801,11 +806,11 @@ export class DiagnosticoClinico {
 
 ```typescript
 export enum NivelMovilidad {
-  AMBULATORIO_INDEPENDIENTE  = 'ambulatorio_independiente',
-  AMBULATORIO_CON_APOYO      = 'ambulatorio_con_apoyo',
-  SILLA_DE_RUEDAS_PARCIAL    = 'silla_de_ruedas_parcial',
+  AMBULATORIO_INDEPENDIENTE = 'ambulatorio_independiente',
+  AMBULATORIO_CON_APOYO = 'ambulatorio_con_apoyo',
+  SILLA_DE_RUEDAS_PARCIAL = 'silla_de_ruedas_parcial',
   SILLA_DE_RUEDAS_PERMANENTE = 'silla_de_ruedas_permanente',
-  POSTRADO                   = 'postrado',
+  POSTRADO = 'postrado',
 }
 
 @Entity('evaluaciones_funcionales')
@@ -813,23 +818,26 @@ export class EvaluacionFuncional {
   @PrimaryGeneratedColumn() id: number;
   @Column() miembroId: number;
   @ManyToOne(() => Miembro) @JoinColumn({ name: 'miembroId' }) miembro: Miembro;
-  @Column() fecha: string;                               // ISO date
+  @Column() fecha: string; // ISO date
   @Column({ type: 'varchar' }) nivelMovilidad: NivelMovilidad;
-  @Column({ nullable: true }) puntuacionSara: number;   // 0–40
+  @Column({ nullable: true }) puntuacionSara: number; // 0–40
   @Column({ default: false }) disartria: boolean;
   @Column({ default: false }) disfagia: boolean;
   @Column({ default: false }) nistagmo: boolean;
   @Column({ default: false }) tieneCuidador: boolean;
   @Column({ nullable: true }) nombreCuidador: string;
   @Column({ nullable: true }) observaciones: string;
-  @Column() registradoPorId: number;                     // FK al user que registró
-  @ManyToOne(() => User, { nullable: true }) @JoinColumn({ name: 'registradoPorId' }) registradoPor: User;
+  @Column() registradoPorId: number; // FK al user que registró
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'registradoPorId' })
+  registradoPor: User;
   @CreateDateColumn() createdAt: Date;
   // Sin @UpdateDateColumn — append-only, no se modifica jamás
 }
 ```
 
 **Reglas:**
+
 - Las tablas `users` y `members` son independientes. No usar herencia ni tabla única.
 - `members.comunaId` referencia a `comunas.id` — la región se obtiene a través de la relación `comuna → region`.
 - `regiones` y `comunas` se pueblan mediante un seeder al iniciar la app (solo si las tablas están vacías).
