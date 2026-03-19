@@ -74,7 +74,9 @@ Plataforma de gestión para la **Agrupación AtaxChile** que permite:
 | ORM | TypeORM 0.3 |
 | BD Producción | PostgreSQL (Supabase) |
 | BD Desarrollo | SQLite en archivo (`./db/dev.db`) |
+| Infraestructura local | Docker Compose — PostgreSQL 16 (puerto 5434) |
 | Autenticación | JWT (Passport) — access + refresh tokens |
+| Seguridad HTTP | helmet (headers) + @nestjs/throttler (rate limiting) |
 | Validación | class-validator + class-transformer |
 | Email | Resend |
 | Documentación | @nestjs/swagger + Swagger UI |
@@ -86,14 +88,16 @@ Plataforma de gestión para la **Agrupación AtaxChile** que permite:
 
 ```
 src/
-├── auth/          Autenticación JWT, guards, decoradores
-├── users/         Usuarios administrativos (staff y directivos)
-├── geo/           Regiones y comunas de Chile (datos de referencia)
-├── miembros/      Socios de la agrupación
-├── ataxia-types/  Catálogo controlado de tipos de ataxia
-├── stats/         Estadísticas agregadas (solo lectura)
-├── audit/         Registro de auditoría inmutable
-└── common/        Filtros, interceptores y pipes compartidos
+├── auth/                  Autenticación JWT, guards, decoradores
+├── users/                 Usuarios administrativos (staff y directivos)
+├── geo/                   Regiones y comunas de Chile (datos de referencia)
+├── miembros/              Socios de la agrupación
+├── ataxia-types/          Catálogo controlado de tipos de ataxia
+├── diagnostico-clinico/   Diagnóstico clínico por miembro (1:1, mutable)
+├── evaluacion-funcional/  Evaluaciones SARA y movilidad (append-only)
+├── stats/                 Estadísticas agregadas (solo lectura)
+├── audit/                 Registro de auditoría inmutable
+└── common/                TransformInterceptor, PaginatedResult, RutValidator
 ```
 
 **Separación clave:** `users` (acceso al sistema) ≠ `members` (socios registrados)
@@ -240,7 +244,7 @@ POST /auth/reset-password  { token, nuevaPassword }
 | `idiopatica` | Sin causa identificada | SAOA, esporádica no clasificada |
 | `otra` | En investigación | Origen combinado, sin diagnóstico |
 
-> El `estadoDiagnostico` (`confirmado` / `presuntivo` / `en_estudio`) pertenece al **miembro**, no al catálogo.
+> La confirmación diagnóstica (`genetico` / `clinico` / `probable`) pertenece a `DiagnosticoClinico`, no al catálogo ni al miembro directamente.
 
 ---
 
@@ -266,14 +270,16 @@ Migración desde tabla SQL legacy (`tipo_ataxia`, 46 registros) al nuevo seeder 
 # Módulo Members
 ## Socios de la Agrupación
 
-Entidad `Member` con dos perfiles diferenciados:
+Entidad `Miembro` con dos perfiles diferenciados:
 
 | Campo | Paciente (`esRepresentante: false`) | Representante (`esRepresentante: true`) |
 |---|---|---|
-| `tipoAtaxiaId` | **Obligatorio** | `null` |
-| `estadoDiagnostico` | **Obligatorio** | `null` |
+| `tipoAtaxiaId` | Referencia rápida al catálogo | `null` |
+| `diagnosticoClinico` | Relación 1:1 con `DiagnosticoClinico` | `null` |
 | `tipoRepresentacion` | `null` | **Obligatorio** |
 | `representadoId` o `representadoNombre` | `null` | Al menos uno |
+
+> El diagnóstico completo (confirmación, subtipo, fecha, institución) vive en la entidad **`DiagnosticoClinico`**, separada del miembro.
 
 ---
 
@@ -285,11 +291,50 @@ Campos incorporados desde el sistema SQL legado (`socio`):
 |---|---|---|
 | `celular` | `celular` en SQL | `string` nullable |
 | `profesion` | `profesion` en SQL | `string` nullable |
-| `estadoCivil` | `id_estado_civil` en SQL | enum `EstadoCivil` (8 valores) |
+| `estadoCivil` | `id_estado_civil` en SQL | enum `EstadoCivil` (soltero/casado/viudo/divorciado) |
 | `estado` | `id_estado_socio` en SQL | enum `EstadoSocio` (activo/renunciado/suspendido/fallecido) |
 | `fechaCambioEstado` | `fecha_cambio_estado` en SQL | `Date` nullable — auto-actualizada |
 
 > `anio_inscripcion` y `anio_cambio_estado` **no se almacenan** — se derivan de `.getFullYear()`.
+
+---
+
+<!-- _class: modulo -->
+
+# Módulo Diagnóstico Clínico
+## Entidad `DiagnosticoClinico` — relación 1:1 con `Miembro`
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `tipoAtaxiaId` | FK → `AtaxiaType` | Tipo de ataxia del catálogo |
+| `subtipo` | `string` nullable | Texto libre (ej: SCA2, Friedreich) |
+| `confirmacion` | `ConfirmacionDiagnostico` | `genetico` / `clinico` / `probable` |
+| `fechaDiagnostico` | `date` nullable | Fecha del diagnóstico |
+| `institucion` | `string` nullable | Centro donde se diagnosticó |
+| `medico` | `string` nullable | Médico tratante |
+| `observaciones` | `text` nullable | Notas adicionales |
+
+> Solo los pacientes (`esRepresentante: false`) tienen diagnóstico clínico asociado.
+
+---
+
+<!-- _class: modulo -->
+
+# Módulo Evaluación Funcional
+## Entidad `EvaluacionFuncional` — append-only
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `fecha` | `date` | Fecha de la evaluación |
+| `nivelMovilidad` | `NivelMovilidad` | ambulatorio / silla parcial / silla total / postrado |
+| `puntuacionSara` | `int` nullable | Escala SARA 0–40 (estándar internacional) |
+| `disartria` | `boolean` | Dificultad para hablar |
+| `disfagia` | `boolean` | Dificultad para tragar |
+| `nistagmo` | `boolean` | Movimiento involuntario de ojos |
+| `tieneCuidador` | `boolean` | Tiene cuidador asignado |
+| `registradoPorId` | FK → `User` | Usuario que registró la evaluación |
+
+> **Append-only:** sin UPDATE ni DELETE. Cada evaluación es un hecho histórico inmutable.
 
 ---
 
@@ -323,6 +368,8 @@ export enum TipoRepresentacion {
 | Geo | `/geo` | Regiones y comunas (lectura pública, escritura admin) |
 | Tipos de Ataxia | `/ataxia-types` | Catálogo con filtro `?grupo=` + soft delete |
 | Miembros | `/miembros` | `POST`, `GET`, `GET /:id`, `PATCH /:id`, `PATCH /:id/estado`, `PATCH /:id/vincular-usuario` |
+| Diagnóstico Clínico | `/diagnostico-clinico` | `POST`, `GET /:miembroId`, `PATCH /:miembroId` |
+| Eval. Funcional | `/evaluacion-funcional` | `POST` (append-only), `GET /:miembroId` |
 | Estadísticas | `/stats` | Por tipo, región, rango etario, crecimiento anual |
 | Auditoría | `/audit-logs` | Solo lectura, acceso superadmin |
 | Exportaciones | `/exports` | CSV / XLSX — solo roles autorizados |
@@ -367,10 +414,14 @@ SwaggerModule.setup('api/docs', app, document)
 | `geo` | ✅ Implementado y testeado |
 | `ataxia-types` | ✅ Implementado y testeado |
 | `miembros` | ✅ Implementado y testeado |
+| `diagnostico-clinico` | ✅ Implementado |
+| `evaluacion-funcional` | ✅ Implementado (append-only) |
 | `stats` | 🔲 Pendiente |
 | `audit` | 🔲 Pendiente |
 | `exports` | 🔲 Pendiente |
 | **Swagger** | ✅ Configurado en todos los módulos implementados |
+| **Docker Compose** | ✅ PostgreSQL 16 local (puerto 5434) |
+| **Seguridad** | ✅ helmet + throttler configurados |
 
 ---
 
@@ -379,8 +430,10 @@ SwaggerModule.setup('api/docs', app, document)
 # Próximos Pasos
 
 1. Implementar módulo `audit` (registro inmutable de eventos)
-2. Implementar módulo `stats` (reportes agregados)
-3. Implementar módulo `exports` (CSV / XLSX)
+2. Implementar módulo `stats` (reportes agregados por tipo, región y rango etario)
+3. Implementar módulo `exports` (CSV / XLSX — solo roles autorizados)
+4. Migraciones TypeORM para paso a PostgreSQL en producción
+5. Tests e2e para módulos de diagnóstico y evaluación funcional
 
 ---
 
