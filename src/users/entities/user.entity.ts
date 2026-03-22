@@ -55,6 +55,15 @@ export class User {
   @Column({ type: 'timestamptz', nullable: true })
   refreshTokenExpires: Date | null
 
+  @Column({ type: 'varchar', nullable: true })
+  emailPendiente: string | null
+
+  @Column({ type: 'varchar', nullable: true })
+  tokenEmailCambio: string | null
+
+  @Column({ type: 'timestamptz', nullable: true })
+  tokenEmailCambioExpires: Date | null
+
   @CreateDateColumn()
   createdAt: Date
 

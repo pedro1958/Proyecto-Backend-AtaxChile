@@ -47,6 +47,19 @@ export class UsersController {
   }
 
   @Public()
+  @Get('confirmar-email/:token')
+  @Throttle({ global: { ttl: 60_000, limit: 10 } })
+  @ApiOperation({ summary: 'Confirmar cambio de dirección de correo' })
+  @ApiParam({ name: 'token', description: 'Token de confirmación recibido en el nuevo correo' })
+  @ApiResponse({ status: 200, description: 'Email actualizado correctamente' })
+  @ApiResponse({ status: 400, description: 'Token inválido o expirado' })
+  @ApiResponse({ status: 409, description: 'El email ya está en uso' })
+  async confirmarEmailCambio(@Param('token') token: string) {
+    await this.usersService.confirmarEmailCambio(token)
+    return { message: 'Correo actualizado correctamente' }
+  }
+
+  @Public()
   @Get('activar/:token')
   @Throttle({ global: { ttl: 60_000, limit: 10 } }) // 10 intentos por minuto
   @ApiOperation({ summary: 'Activar cuenta desde enlace de correo' })

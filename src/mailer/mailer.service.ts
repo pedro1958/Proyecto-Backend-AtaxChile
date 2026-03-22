@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { Resend } from 'resend'
 import { activacionTemplate } from './templates/activacion.template'
 import { recuperacionTemplate } from './templates/recuperacion.template'
+import { confirmacionEmailTemplate } from './templates/confirmacion-email.template'
 
 @Injectable()
 export class MailerService {
@@ -47,6 +48,23 @@ export class MailerService {
       to: email,
       subject: 'Recupera tu contraseña — AtaxChile',
       html: recuperacionTemplate(url),
+    })
+  }
+
+  async enviarConfirmacionEmailCambio(emailNuevo: string, token: string): Promise<void> {
+    const appUrl = this.config.get<string>('APP_URL') ?? 'http://localhost:5000'
+    const url = `${appUrl}/api/v1/users/confirmar-email/${token}`
+
+    if (!this.resend) {
+      this.logger.log(`[DEV] Enlace de confirmación de email para ${emailNuevo}: ${url}`)
+      return
+    }
+
+    await this.resend.emails.send({
+      from: this.config.get<string>('RESEND_FROM') ?? 'onboarding@resend.dev',
+      to: emailNuevo,
+      subject: 'Confirma tu nuevo correo — AtaxChile',
+      html: confirmacionEmailTemplate(url, emailNuevo),
     })
   }
 }

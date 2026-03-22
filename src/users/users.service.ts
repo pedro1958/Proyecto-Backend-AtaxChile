@@ -93,12 +93,55 @@ export class UsersService {
     return { nombre: usuario.nombre, email: usuario.email, rol: usuario.rol };
   }
 
-  async update(id: number, dto: UpdateUserDto): Promise<UserSinPassword> {
+  async update(id: number, dto: UpdateUserDto): Promise<{ message: string }> {
     const usuario = await this.usersRepository.findOneBy({ id });
     if (!usuario) throw new NotFoundException('Usuario no encontrado');
-    Object.assign(usuario, dto);
-    const actualizado = await this.usersRepository.save(usuario);
-    return this.sinPassword(actualizado);
+
+    if (dto.email && dto.email !== usuario.email) {
+      const existe = await this.usersRepository.findOneBy({ email: dto.email });
+      if (existe) throw new ConflictException('El email ya está registrado');
+
+      const token = randomUUID();
+      usuario.emailPendiente = dto.email;
+      usuario.tokenEmailCambio = token;
+      usuario.tokenEmailCambioExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await this.usersRepository.save(usuario);
+      await this.mailerService.enviarConfirmacionEmailCambio(dto.email, token);
+
+      if (dto.nombre) {
+        usuario.nombre = dto.nombre;
+        await this.usersRepository.save(usuario);
+      }
+
+      return { message: `Hemos enviado un correo a ${dto.email} para confirmar el cambio de dirección` };
+    }
+
+    if (dto.nombre) {
+      usuario.nombre = dto.nombre;
+      await this.usersRepository.save(usuario);
+    }
+
+    return { message: 'Perfil actualizado' };
+  }
+
+  async confirmarEmailCambio(token: string): Promise<void> {
+    const usuario = await this.usersRepository.findOneBy({ tokenEmailCambio: token });
+    if (!usuario) throw new BadRequestException('Token inválido o expirado');
+
+    if (!usuario.tokenEmailCambioExpires || usuario.tokenEmailCambioExpires < new Date()) {
+      throw new BadRequestException('Token inválido o expirado');
+    }
+
+    if (!usuario.emailPendiente) throw new BadRequestException('Token inválido o expirado');
+
+    const existe = await this.usersRepository.findOneBy({ email: usuario.emailPendiente });
+    if (existe) throw new ConflictException('El email ya está en uso');
+
+    usuario.email = usuario.emailPendiente;
+    usuario.emailPendiente = null;
+    usuario.tokenEmailCambio = null;
+    usuario.tokenEmailCambioExpires = null;
+    await this.usersRepository.save(usuario);
   }
 
   async updateRol(id: number, dto: UpdateRolDto): Promise<UserSinPassword> {
