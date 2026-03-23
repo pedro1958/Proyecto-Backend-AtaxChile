@@ -191,6 +191,8 @@ Reglas:
 - Distribución por región.
 - Distribución por rango etario.
 - Evolución anual de registros.
+- Distribución por nivel de movilidad (última evaluación funcional por miembro).
+- Estado de cuotas: pagadas vs. impagas por año (cuando módulo cuotas esté activo).
 
 ---
 
@@ -470,18 +472,23 @@ No se implementa `DELETE` — si un tipo ya tiene miembros asociados, eliminarlo
 
 ## 18. Endpoints de Estadísticas
 
-```
-GET /stats/ataxia-types
-GET /stats/regions
-GET /stats/age-ranges
-GET /stats/annual-growth
-```
+> **Nota:** SUPERADMIN tiene acceso implícito a todos los endpoints mediante bypass global en `RolesGuard`. No se lista en cada fila.
+
+| Endpoint                  | Roles autorizados                   | Descripción |
+|---------------------------|-------------------------------------|-------------|
+| `GET /stats/resumen`      | ADMIN, SECRETARIO, TESORERO         | Panel principal: totales y variaciones recientes |
+| `GET /stats/miembros`     | ADMIN, SECRETARIO                   | Desglose por estado (activo, fallecido, etc.) |
+| `GET /stats/diagnosticos` | ADMIN, SECRETARIO                   | Distribución por tipo de ataxia y confirmación diagnóstica. Excluye representantes. |
+| `GET /stats/funcional`    | ADMIN, SECRETARIO                   | Distribución por nivel de movilidad (última evaluación por miembro) |
+| `GET /stats/geografico`   | ADMIN, SECRETARIO                   | Distribución por región |
+| `GET /stats/cuotas`       | ADMIN, TESORERO                     | Morosos vs. al día, filtrable por `?año=` |
 
 Reglas:
 
-- Solo datos agregados.
-- Aplicar umbral mínimo de anonimización.
-- Registrar auditoría de acceso.
+- Solo datos agregados (nunca registros individuales).
+- Aplicar umbral mínimo de 5 registros para publicar una categoría (anonimización).
+- Cada acceso se registra en auditoría.
+- Los representantes (`esRepresentante: true`) se excluyen de los reportes de diagnóstico y funcionalidad.
 
 ---
 

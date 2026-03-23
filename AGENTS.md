@@ -98,6 +98,8 @@ Controller → Service → Repository (TypeORM Entity)
 
 - **Evaluación funcional** (`evaluacion-funcional`): Historial append-only de evaluaciones periódicas. Rutas anidadas bajo `/miembros/:miembroId/evaluaciones`. Operaciones: `POST` (registrar nueva evaluación), `GET` (listar historial ordenado por fecha DESC), `GET /ultima` (evaluación más reciente). **CRÍTICO — no implementar UPDATE ni DELETE**: el servicio deliberadamente no expone estos métodos; la integridad del historial clínico depende de que los registros sean inmutables una vez guardados. El campo `registradoPorId` se captura del usuario autenticado mediante `@CurrentUser()`.
 
+- **Estadísticas** (`stats`): Módulo de solo lectura que agrega datos de otros módulos mediante `QueryBuilder` con `GROUP BY`. No tiene entidad propia ni tabla en BD. Endpoints bajo `/stats/`. Los representantes (`esRepresentante: true`) se excluyen de las estadísticas de diagnóstico y funcionalidad. Cada consulta registra un evento en auditoría. No implementar UPDATE ni DELETE.
+
 - **Recuperación de contraseña**:
   1. `POST /auth/forgot-password` — recibe `email`; busca el usuario, genera token con `crypto.randomBytes(32)`, almacena el **hash** del token y su expiración (1 hora) en los campos `resetPasswordToken` / `resetPasswordExpires` de la entidad `User`; envía email con enlace al frontend (`/reset-password?token=<token-en-claro>`); responde siempre con mensaje genérico sin confirmar si el email existe (previene enumeración de usuarios).
   2. `POST /auth/reset-password` — recibe `token` + `nuevaPassword`; busca usuario por hash del token y verifica que no haya expirado; hashea la nueva contraseña con bcrypt (10 rounds); limpia `resetPasswordToken` y `resetPasswordExpires`; registra el evento en auditoría.
