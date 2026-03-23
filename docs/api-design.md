@@ -300,6 +300,15 @@ Los roles aplican exclusivamente a **usuarios administrativos** (`users`). Los m
 
 ---
 
+#### Exportaciones
+
+| Endpoint | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas |
+|---|:---:|:---:|:---:|:---:|---|
+| GET /exports/miembros | — | ✓ | ✓ | ✓ | CSV/XLSX con columnas según rol |
+| GET /exports/miembros/:id/evaluaciones | — | ✓ | — | ✓ | PDF con historial de evaluaciones |
+
+---
+
 #### Auditoría
 
 | Endpoint | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas |
@@ -616,16 +625,72 @@ Reglas:
 
 ## 19. Endpoints de Exportaciones
 
-```
-GET /exports/members
-GET /exports/stats
-```
+Genera archivos con datos de miembros para roles autorizados. Todo acceso se registra en auditoría.
 
-Reglas:
+### Formatos soportados
 
-- Solo roles autorizados.
-- Registro obligatorio en auditoría.
-- Formatos permitidos: CSV, XLSX.
+| Formato | Extensión | Librería |
+|---------|----------|----------|
+| CSV | `.csv` | Native (fs) |
+| XLSX | `.xlsx` | `exceljs` |
+| PDF | `.pdf` | `pdfkit` |
+
+### Endpoints
+
+| Método | Ruta | Roles | Descripción |
+|--------|------|-------|-------------|
+| `GET` | `/exports/miembros` | ADMIN, SECRETARIO, TESORERO | Exporta lista de miembros |
+| `GET` | `/exports/miembros/:id/evaluaciones` | ADMIN, SECRETARIO | Ficha individual con historial de evaluaciones |
+
+### Query params comunes
+
+| Parámetro | Tipo | Descripción |
+|-----------|------|-------------|
+| `formato` | `csv` \| `xlsx` \| `pdf` | Formato del archivo (default: `csv`) |
+| `estado` | `activo` \| `renunciado` \| `suspendido` \| `fallecido` | Filtrar por estado del socio |
+| `regionId` | number | Filtrar por región |
+| `tipoAtaxiaId` | number | Filtrar por tipo de ataxia |
+| `fechaDesde` | ISO date | Filtrar por fecha de ingreso (inicio) |
+| `fechaHasta` | ISO date | Filtrar por fecha de ingreso (fin) |
+
+### Columnas por rol
+
+| Columna | ADMIN / SECRETARIO | TESORERO |
+|---------|:-----------------:|:--------:|
+| RUT | ✅ | ✅ |
+| Nombre completo | ✅ | ✅ |
+| Email | ✅ | ✅ |
+| Celular | ✅ | ❌ |
+| Región / Comuna | ✅ | ✅ |
+| Tipo de ataxia | ✅ | ❌ |
+| Fecha de ingreso | ✅ | ✅ |
+| Estado socio | ✅ | ✅ |
+| Diagnóstico clínico | ✅ | ❌ |
+| Evaluaciones funcionales | ✅ | ❌ |
+
+### PDF — Informe general
+
+Genera un documento PDF con:
+
+- Encabezado con logo y nombre de la agrupación
+- Tabla paginada con datos de los miembros filtrados
+- Totales y resumen estadístico
+- Fecha de generación
+
+### PDF — Ficha individual
+
+Genera un documento PDF por miembro (`/exports/miembros/:id/evaluaciones`):
+
+- Datos personales del miembro
+- Diagnóstico clínico (si existe)
+- Historial completo de evaluaciones funcionales (tabla con fecha, nivel movilidad, puntuación SARA, síntomas)
+- Firma del profesional que generó el reporte
+
+### Reglas
+
+- El header `Content-Disposition: attachment` fuerza la descarga del archivo
+- TESORERO recibe columnas reducidas para proteger datos clínicos sensibles
+- Cada exportación genera un evento `EXPORTAR_DATOS` en auditoría
 
 ---
 
@@ -1252,6 +1317,15 @@ src/
 │   ├── audit.service.ts            # Solo escritura interna; no expone creación externa
 │   ├── audit.controller.ts         # GET /audit-logs — solo superadmin
 │   └── audit.module.ts
+│
+├── exports/                        # Exportación de datos (CSV/XLSX/PDF)
+│   ├── exports.controller.ts       # GET /exports/miembros, GET /exports/miembros/:id/evaluaciones
+│   ├── exports.service.ts          # Lógica de generación de archivos
+│   ├── exports.module.ts
+│   └── exporters/
+│       ├── csv.exporter.ts         # Generador de archivos CSV
+│       ├── xlsx.exporter.ts        # Generador de archivos XLSX (exceljs)
+│       └── pdf.exporter.ts         # Generador de archivos PDF (pdfkit)
 │
 └── common/                         # Utilidades compartidas
     ├── dto/
