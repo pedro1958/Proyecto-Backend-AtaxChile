@@ -454,6 +454,25 @@ SwaggerModule.setup('api/docs', app, document);
 
 ---
 
+<!-- _class: modulo -->
+
+# Módulo Stats
+
+## Estadísticas agregadas — solo lectura
+
+| Endpoint                  | Roles             | Descripción |
+|---------------------------|-------------------|-------------|
+| `GET /stats/resumen`      | ADMIN, SEC, TES   | Totales y variaciones recientes |
+| `GET /stats/miembros`     | ADMIN, SECRETARIO | Distribución por estado |
+| `GET /stats/diagnosticos` | ADMIN, SECRETARIO | Por tipo de ataxia y confirmación |
+| `GET /stats/funcional`    | ADMIN, SECRETARIO | Última evaluación por miembro |
+| `GET /stats/geografico`   | ADMIN, SECRETARIO | Distribución por región |
+
+- Sin entidad propia — agrega datos con `QueryBuilder + GROUP BY`
+- Representantes excluidos de diagnósticos, funcional y geográfico
+
+---
+
 # Estado Actual del Proyecto
 
 | Módulo                 | Estado                                            |
@@ -465,7 +484,7 @@ SwaggerModule.setup('api/docs', app, document);
 | `miembros`             | ✅ Implementado y testeado                        |
 | `diagnostico-clinico`  | ✅ Implementado y testeado                        |
 | `evaluacion-funcional` | ✅ Implementado (append-only) y testeado          |
-| `stats`                | 🔲 Pendiente                                      |
+| `stats`                | ✅ Implementado (solo lectura, sin entidad propia) |
 | `audit`                | 🔲 Pendiente                                      |
 | `exports`              | 🔲 Pendiente                                      |
 | **Swagger**            | ✅ Configurado en todos los módulos implementados |
@@ -478,11 +497,11 @@ SwaggerModule.setup('api/docs', app, document);
 
 # Próximos Pasos
 
-1. Implementar módulo `audit` (registro inmutable de eventos)
-2. Implementar módulo `stats` (reportes agregados por tipo, región y rango etario)
+1. Implementar módulo `cuotas` (TarifaAnual + Cuota, diseño documentado)
+2. Implementar módulo `audit` (registro inmutable de eventos)
 3. Implementar módulo `exports` (CSV / XLSX — solo roles autorizados)
-4. Migraciones TypeORM para paso a PostgreSQL en producción
-5. Tests e2e para módulos de diagnóstico y evaluación funcional
+4. Migraciones TypeORM para paso a producción
+5. Tests e2e para módulos de diagnóstico, evaluación y stats
 
 ---
 
