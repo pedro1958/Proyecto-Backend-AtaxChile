@@ -300,6 +300,13 @@ Los roles aplican exclusivamente a **usuarios administrativos** (`users`). Los m
 
 ---
 
+#### Auditoría
+
+| Endpoint | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas |
+|---|:---:|:---:|:---:|:---:|---|
+| GET /audit-logs | — | — | — | — | Solo SUPERADMIN |
+| GET /audit-logs/:id | — | — | — | — | Solo SUPERADMIN |
+
 ### 8.3 Reglas
 
 - Autenticación obligatoria salvo endpoints marcados como Público.
@@ -338,22 +345,46 @@ Reglas:
 
 ## 10. Auditoría
 
-Eventos auditables:
+### 10.1 Entidad `AuditLog`
 
-- Login / Logout.
-- Creación de miembro.
-- Modificación de datos.
-- Cambio de tipo de ataxia.
-- Eliminación lógica.
-- Generación de reportes.
-- Exportación de datos.
-- Cambios en catálogo.
+| Campo       | Tipo              | Descripción |
+|-------------|-------------------|-------------|
+| `id`        | uuid              | PK |
+| `usuarioId` | FK → User \| null | Quién ejecutó la acción (null si no hay sesión) |
+| `accion`    | enum              | Tipo de evento (ver §10.2) |
+| `entidad`   | varchar           | Nombre de la tabla afectada (`miembros`, `users`, etc.) |
+| `entidadId` | varchar \| null   | ID del registro afectado |
+| `detalle`   | json \| null      | Datos adicionales del evento (campos cambiados, etc.) |
+| `ip`        | varchar \| null   | IP del cliente |
+| `createdAt` | timestamp         | Fecha del evento |
 
-Reglas:
+> Sin `updatedAt`. Registro inmutable — sin UPDATE ni DELETE.
 
-- Auditoría inmutable y no editable.
-- Retención mínima configurable.
-- Acceso restringido a Administrador.
+### 10.2 Eventos auditables
+
+| Acción (`accion`)       | Cuándo se registra |
+|-------------------------|--------------------|
+| `LOGIN`                 | Login exitoso |
+| `LOGOUT`                | Cierre de sesión |
+| `LOGIN_FALLIDO`         | Intento fallido de login |
+| `CREAR_MIEMBRO`         | POST /miembros |
+| `MODIFICAR_MIEMBRO`     | PATCH /miembros/:id |
+| `CAMBIAR_ESTADO_MIEMBRO`| PATCH /miembros/:id/estado |
+| `CREAR_DIAGNOSTICO`     | POST /miembros/:id/diagnostico |
+| `MODIFICAR_DIAGNOSTICO` | PATCH /miembros/:id/diagnostico |
+| `CREAR_EVALUACION`      | POST /miembros/:id/evaluaciones |
+| `MODIFICAR_CATALOGO`    | POST/PATCH /ataxia-types |
+| `GENERAR_REPORTE`       | GET /stats/* |
+| `EXPORTAR_DATOS`        | GET /exports/* |
+| `CAMBIAR_ROL`           | PATCH /users/:id/rol |
+
+### 10.3 Reglas
+
+- Registro inmutable — sin UPDATE ni DELETE en la tabla.
+- `AuditService` es de uso exclusivamente interno — ningún controller externo llama a `create` directamente.
+- Fallo en auditoría no debe interrumpir la operación principal (fire-and-forget).
+- Acceso de lectura restringido a SUPERADMIN.
+- Retención mínima configurable por la organización.
 
 ---
 
@@ -600,12 +631,19 @@ Reglas:
 
 ## 20. Endpoints de Auditoría
 
-```
-GET /audit-logs
-GET /audit-logs/{id}
-```
+> **Nota:** SUPERADMIN tiene acceso implícito a todos los endpoints mediante bypass global en `RolesGuard`. No se lista en cada fila.
 
-Acceso restringido a Administrador.
+| Endpoint              | Roles autorizados | Descripción |
+|-----------------------|-------------------|-------------|
+| `GET /audit-logs`     | —                 | Solo SUPERADMIN (bypass) — lista paginada con filtros |
+| `GET /audit-logs/:id` | —                 | Solo SUPERADMIN — detalle de un evento |
+
+Filtros disponibles en `GET /audit-logs`:
+- `?accion=LOGIN` — filtrar por tipo de evento
+- `?entidad=miembros` — filtrar por tabla afectada
+- `?usuarioId=1` — filtrar por usuario
+- `?desde=2026-01-01&hasta=2026-12-31` — rango de fechas
+- `?page=1&limit=20` — paginación estándar
 
 ---
 

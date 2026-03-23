@@ -401,15 +401,15 @@ export enum TipoRepresentacion {
 
 # API REST — Endpoints por Módulo (1/2)
 
-| Módulo              | Base                    | Operaciones                                                                                 |
-| ------------------- | ----------------------- | ------------------------------------------------------------------------------------------- |
-| Auth                | `/auth`                 | login, refresh, logout, forgot/reset/change-password                                        |
-| Usuarios            | `/users`                | CRUD + activar cuenta + cambio de rol/status                                                |
-| Geo                 | `/geo`                  | Regiones y comunas (lectura pública, escritura admin)                                       |
-| Tipos de Ataxia     | `/ataxia-types`         | Catálogo con filtro `?grupo=` + soft delete                                                 |
-| Miembros            | `/miembros`             | `POST`, `GET`, `GET /:id`, `PATCH /:id`, `PATCH /:id/estado`, `PATCH /:id/vincular-usuario` |
-| Diagnóstico Clínico | `/miembros/:id/diagnostico`  | `POST`, `GET`, `PATCH`                                                                 |
-| Eval. Funcional     | `/miembros/:id/evaluaciones` | `POST` (append-only), `GET`, `GET /ultima`                                             |
+| Módulo              | Base                         | Operaciones                                                                                 |
+| ------------------- | ---------------------------- | ------------------------------------------------------------------------------------------- |
+| Auth                | `/auth`                      | login, refresh, logout, forgot/reset/change-password                                        |
+| Usuarios            | `/users`                     | CRUD + activar cuenta + cambio de rol/status                                                |
+| Geo                 | `/geo`                       | Regiones y comunas (lectura pública, escritura admin)                                       |
+| Tipos de Ataxia     | `/ataxia-types`              | Catálogo con filtro `?grupo=` + soft delete                                                 |
+| Miembros            | `/miembros`                  | `POST`, `GET`, `GET /:id`, `PATCH /:id`, `PATCH /:id/estado`, `PATCH /:id/vincular-usuario` |
+| Diagnóstico Clínico | `/miembros/:id/diagnostico`  | `POST`, `GET`, `PATCH`                                                                      |
+| Eval. Funcional     | `/miembros/:id/evaluaciones` | `POST` (append-only), `GET`, `GET /ultima`                                                  |
 
 **Base URL:** `/api/v1`
 
@@ -417,13 +417,13 @@ export enum TipoRepresentacion {
 
 # API REST — Endpoints por Módulo (2/2)
 
-| Módulo        | Base          | Operaciones                                                          |
-| ------------- | ------------- | -------------------------------------------------------------------- |
-| Estadísticas  | `/stats`      | resumen · miembros · diagnósticos · funcional · geográfico · cuotas* |
-| Auditoría     | `/audit-logs` | Solo lectura, acceso SUPERADMIN                                      |
-| Exportaciones | `/exports`    | CSV / XLSX — solo roles autorizados                                  |
+| Módulo        | Base          | Operaciones                                                           |
+| ------------- | ------------- | --------------------------------------------------------------------- |
+| Estadísticas  | `/stats`      | resumen · miembros · diagnósticos · funcional · geográfico · cuotas\* |
+| Auditoría     | `/audit-logs` | Solo lectura, acceso SUPERADMIN                                       |
+| Exportaciones | `/exports`    | CSV / XLSX — solo roles autorizados                                   |
 
-*\* pendiente módulo cuotas*
+_\* pendiente módulo cuotas_
 
 ---
 
@@ -435,7 +435,7 @@ export enum TipoRepresentacion {
 // main.ts
 const config = new DocumentBuilder()
   .setTitle('AtaxChile API')
-  .setDescription('Sistema de registro de miembros de la Agrupación AtaxChile')
+  .setDescription('Sistema de registro de miembros de la Asociación AtaxChile')
   .setVersion('1.0')
   .addBearerAuth()
   .build();
@@ -460,36 +460,58 @@ SwaggerModule.setup('api/docs', app, document);
 
 ## Estadísticas agregadas — solo lectura
 
-| Endpoint                  | Roles             | Descripción |
-|---------------------------|-------------------|-------------|
-| `GET /stats/resumen`      | ADMIN, SEC, TES   | Totales y variaciones recientes |
-| `GET /stats/miembros`     | ADMIN, SECRETARIO | Distribución por estado |
+| Endpoint                  | Roles             | Descripción                       |
+| ------------------------- | ----------------- | --------------------------------- |
+| `GET /stats/resumen`      | ADMIN, SEC, TES   | Totales y variaciones recientes   |
+| `GET /stats/miembros`     | ADMIN, SECRETARIO | Distribución por estado           |
 | `GET /stats/diagnosticos` | ADMIN, SECRETARIO | Por tipo de ataxia y confirmación |
-| `GET /stats/funcional`    | ADMIN, SECRETARIO | Última evaluación por miembro |
-| `GET /stats/geografico`   | ADMIN, SECRETARIO | Distribución por región |
+| `GET /stats/funcional`    | ADMIN, SECRETARIO | Última evaluación por miembro     |
+| `GET /stats/geografico`   | ADMIN, SECRETARIO | Distribución por región           |
 
 - Sin entidad propia — agrega datos con `QueryBuilder + GROUP BY`
 - Representantes excluidos de diagnósticos, funcional y geográfico
 
 ---
 
+<!-- _class: modulo -->
+
+# Módulo Audit
+
+## Registro inmutable de eventos del sistema
+
+| Campo       | Tipo            | Descripción |
+|-------------|-----------------|-------------|
+| `accion`    | enum            | LOGIN · CREAR_MIEMBRO · MODIFICAR_MIEMBRO · … |
+| `entidad`   | varchar         | Tabla afectada (`miembros`, `users`, etc.) |
+| `entidadId` | varchar \| null | ID del registro afectado |
+| `detalle`   | json \| null    | Campos cambiados u otros datos del evento |
+| `usuarioId` | FK \| null      | Quién ejecutó la acción |
+| `ip`        | varchar \| null | IP del cliente |
+
+- **Append-only** — sin UPDATE ni DELETE
+- `AuditService` es interno — los servicios lo inyectan; no hay endpoint de creación
+- Fallo en auditoría no interrumpe la operación principal (fire-and-forget)
+- Lectura restringida exclusivamente a SUPERADMIN
+
+---
+
 # Estado Actual del Proyecto
 
-| Módulo                 | Estado                                            |
-| ---------------------- | ------------------------------------------------- |
-| `auth`                 | ✅ Implementado y testeado                        |
-| `users`                | ✅ Implementado y testeado                        |
-| `geo`                  | ✅ Implementado y testeado                        |
-| `ataxia-types`         | ✅ Implementado y testeado                        |
-| `miembros`             | ✅ Implementado y testeado                        |
-| `diagnostico-clinico`  | ✅ Implementado y testeado                        |
-| `evaluacion-funcional` | ✅ Implementado (append-only) y testeado          |
-| `stats`                | ✅ Implementado (solo lectura, sin entidad propia) |
-| `audit`                | 🔲 Pendiente                                      |
-| `exports`              | 🔲 Pendiente                                      |
-| **Swagger**            | ✅ Configurado en todos los módulos implementados |
-| **Docker Compose**     | ✅ PostgreSQL 16 local (puerto 5434)              |
-| **Seguridad**          | ✅ helmet + throttler configurados                |
+| Módulo                 | Estado                                                        |
+| ---------------------- | ------------------------------------------------------------- |
+| `auth`                 | ✅ Implementado y testeado                                    |
+| `users`                | ✅ Implementado y testeado                                    |
+| `geo`                  | ✅ Implementado y testeado                                    |
+| `ataxia-types`         | ✅ Implementado y testeado                                    |
+| `miembros`             | ✅ Implementado y testeado                                    |
+| `diagnostico-clinico`  | ✅ Implementado y testeado                                    |
+| `evaluacion-funcional` | ✅ Implementado (append-only) y testeado                      |
+| `stats`                | ✅ Implementado (solo lectura, sin entidad propia) y testeado |
+| `audit`                | 🔲 Pendiente                                                  |
+| `exports`              | 🔲 Pendiente                                                  |
+| **Swagger**            | ✅ Configurado en todos los módulos implementados             |
+| **Docker Compose**     | ✅ PostgreSQL 16 local (puerto 5434)                          |
+| **Seguridad**          | ✅ helmet + throttler configurados                            |
 
 ---
 
@@ -497,8 +519,8 @@ SwaggerModule.setup('api/docs', app, document);
 
 # Próximos Pasos
 
-1. Implementar módulo `cuotas` (TarifaAnual + Cuota, diseño documentado)
-2. Implementar módulo `audit` (registro inmutable de eventos)
+1. Implementar módulo `audit` (registro inmutable — prerequisito para otros módulos)
+2. Implementar módulo `cuotas` (TarifaAnual + Cuota, diseño documentado)
 3. Implementar módulo `exports` (CSV / XLSX — solo roles autorizados)
 4. Migraciones TypeORM para paso a producción
 5. Tests e2e para módulos de diagnóstico, evaluación y stats

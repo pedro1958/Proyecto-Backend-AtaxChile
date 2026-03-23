@@ -100,6 +100,8 @@ Controller → Service → Repository (TypeORM Entity)
 
 - **Estadísticas** (`stats`): Módulo de solo lectura que agrega datos de otros módulos mediante `QueryBuilder` con `GROUP BY`. No tiene entidad propia ni tabla en BD. Endpoints bajo `/stats/`. Los representantes (`esRepresentante: true`) se excluyen de las estadísticas de diagnóstico y funcionalidad. Cada consulta registra un evento en auditoría. No implementar UPDATE ni DELETE.
 
+- **Auditoría** (`audit`): Registro inmutable de eventos del sistema. Tabla `audit_logs` con solo `createdAt` (sin `updatedAt`). **CRÍTICO — no implementar UPDATE ni DELETE**. `AuditService` es de uso interno — otros servicios lo inyectan para registrar eventos; ningún controller externo expone un endpoint de creación. Fallo en auditoría no debe interrumpir la operación principal (fire-and-forget). Endpoints de lectura bajo `/audit-logs/` restringidos exclusivamente a SUPERADMIN.
+
 - **Recuperación de contraseña**:
   1. `POST /auth/forgot-password` — recibe `email`; busca el usuario, genera token con `crypto.randomBytes(32)`, almacena el **hash** del token y su expiración (1 hora) en los campos `resetPasswordToken` / `resetPasswordExpires` de la entidad `User`; envía email con enlace al frontend (`/reset-password?token=<token-en-claro>`); responde siempre con mensaje genérico sin confirmar si el email existe (previene enumeración de usuarios).
   2. `POST /auth/reset-password` — recibe `token` + `nuevaPassword`; busca usuario por hash del token y verifica que no haya expirado; hashea la nueva contraseña con bcrypt (10 rounds); limpia `resetPasswordToken` y `resetPasswordExpires`; registra el evento en auditoría.
