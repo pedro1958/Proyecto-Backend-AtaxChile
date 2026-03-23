@@ -27,6 +27,9 @@ const mockUser: User = {
   resetPasswordExpires: null,
   refreshToken: null,
   refreshTokenExpires: null,
+  emailPendiente: null,
+  tokenEmailCambio: null,
+  tokenEmailCambioExpires: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 }
@@ -196,14 +199,13 @@ describe('UsersService', () => {
   })
 
   describe('update', () => {
-    it('debe actualizar usuario y retornarlo sin password', async () => {
+    it('debe actualizar solo el nombre y retornar mensaje de confirmación', async () => {
       repo.findOneBy.mockResolvedValue({ ...mockUser })
       repo.save.mockResolvedValue({ ...mockUser, nombre: 'Nuevo Nombre' })
 
       const result = await service.update(1, { nombre: 'Nuevo Nombre' })
 
-      expect(result).not.toHaveProperty('password')
-      expect(result.nombre).toBe('Nuevo Nombre')
+      expect(result).toHaveProperty('message', 'Perfil actualizado')
     })
 
     it('debe lanzar NotFoundException si el usuario no existe', async () => {

@@ -22,6 +22,9 @@ const mockUser: User = {
   resetPasswordExpires: null,
   refreshToken: null,
   refreshTokenExpires: null,
+  emailPendiente: null,
+  tokenEmailCambio: null,
+  tokenEmailCambioExpires: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 }
