@@ -2,23 +2,25 @@ import {
   Body,
   Controller,
   Get,
+  Ip,
   Param,
   ParseIntPipe,
   Patch,
   Post,
-} from '@nestjs/common'
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiParam,
   ApiResponse,
   ApiTags,
-} from '@nestjs/swagger'
-import { DiagnosticoClinicoService } from './diagnostico-clinico.service'
-import { CreateDiagnosticoClinicoDto } from './dto/create-diagnostico-clinico.dto'
-import { UpdateDiagnosticoClinicoDto } from './dto/update-diagnostico-clinico.dto'
-import { Roles } from '../auth/decorators/roles.decorator'
-import { Rol } from '../users/entities/user.entity'
+} from '@nestjs/swagger';
+import { DiagnosticoClinicoService } from './diagnostico-clinico.service';
+import { CreateDiagnosticoClinicoDto } from './dto/create-diagnostico-clinico.dto';
+import { UpdateDiagnosticoClinicoDto } from './dto/update-diagnostico-clinico.dto';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Rol } from '../users/entities/user.entity';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @ApiTags('Diagnóstico Clínico')
 @ApiBearerAuth()
@@ -32,12 +34,17 @@ export class DiagnosticoClinicoController {
   @ApiParam({ name: 'miembroId', description: 'ID del miembro' })
   @ApiResponse({ status: 201, description: 'Diagnóstico registrado' })
   @ApiResponse({ status: 404, description: 'Miembro no encontrado' })
-  @ApiResponse({ status: 409, description: 'Ya existe un diagnóstico — use PATCH para actualizar' })
+  @ApiResponse({
+    status: 409,
+    description: 'Ya existe un diagnóstico — use PATCH para actualizar',
+  })
   create(
     @Param('miembroId', ParseIntPipe) miembroId: number,
     @Body() dto: CreateDiagnosticoClinicoDto,
+    @CurrentUser() user: { id: number },
+    @Ip() ip: string,
   ) {
-    return this.service.create(miembroId, dto)
+    return this.service.create(miembroId, dto, user.id, ip);
   }
 
   @Get()
@@ -47,7 +54,7 @@ export class DiagnosticoClinicoController {
   @ApiResponse({ status: 200, description: 'Diagnóstico del socio' })
   @ApiResponse({ status: 404, description: 'Diagnóstico no encontrado' })
   findByMiembro(@Param('miembroId', ParseIntPipe) miembroId: number) {
-    return this.service.findByMiembro(miembroId)
+    return this.service.findByMiembro(miembroId);
   }
 
   @Patch()
@@ -59,7 +66,9 @@ export class DiagnosticoClinicoController {
   update(
     @Param('miembroId', ParseIntPipe) miembroId: number,
     @Body() dto: UpdateDiagnosticoClinicoDto,
+    @CurrentUser() user: { id: number },
+    @Ip() ip: string,
   ) {
-    return this.service.update(miembroId, dto)
+    return this.service.update(miembroId, dto, user.id, ip);
   }
 }

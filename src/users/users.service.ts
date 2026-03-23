@@ -104,7 +104,9 @@ export class UsersService {
       const token = randomUUID();
       usuario.emailPendiente = dto.email;
       usuario.tokenEmailCambio = token;
-      usuario.tokenEmailCambioExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      usuario.tokenEmailCambioExpires = new Date(
+        Date.now() + 24 * 60 * 60 * 1000,
+      );
       await this.usersRepository.save(usuario);
       await this.mailerService.enviarConfirmacionEmailCambio(dto.email, token);
 
@@ -113,7 +115,9 @@ export class UsersService {
         await this.usersRepository.save(usuario);
       }
 
-      return { message: `Hemos enviado un correo a ${dto.email} para confirmar el cambio de dirección` };
+      return {
+        message: `Hemos enviado un correo a ${dto.email} para confirmar el cambio de dirección`,
+      };
     }
 
     if (dto.nombre) {
@@ -125,16 +129,24 @@ export class UsersService {
   }
 
   async confirmarEmailCambio(token: string): Promise<void> {
-    const usuario = await this.usersRepository.findOneBy({ tokenEmailCambio: token });
+    const usuario = await this.usersRepository.findOneBy({
+      tokenEmailCambio: token,
+    });
     if (!usuario) throw new BadRequestException('Token inválido o expirado');
 
-    if (!usuario.tokenEmailCambioExpires || usuario.tokenEmailCambioExpires < new Date()) {
+    if (
+      !usuario.tokenEmailCambioExpires ||
+      usuario.tokenEmailCambioExpires < new Date()
+    ) {
       throw new BadRequestException('Token inválido o expirado');
     }
 
-    if (!usuario.emailPendiente) throw new BadRequestException('Token inválido o expirado');
+    if (!usuario.emailPendiente)
+      throw new BadRequestException('Token inválido o expirado');
 
-    const existe = await this.usersRepository.findOneBy({ email: usuario.emailPendiente });
+    const existe = await this.usersRepository.findOneBy({
+      email: usuario.emailPendiente,
+    });
     if (existe) throw new ConflictException('El email ya está en uso');
 
     usuario.email = usuario.emailPendiente;

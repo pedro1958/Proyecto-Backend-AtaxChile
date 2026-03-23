@@ -1,8 +1,8 @@
-import { Controller, Get } from '@nestjs/common'
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
-import { Roles } from '../auth/decorators/roles.decorator'
-import { Rol } from '../users/entities/user.entity'
-import { StatsService } from './stats.service'
+import { Controller, Get } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Rol } from '../users/entities/user.entity';
+import { StatsService } from './stats.service';
 
 @ApiTags('Estadísticas')
 @ApiBearerAuth()
@@ -14,34 +14,40 @@ export class StatsController {
   @Roles(Rol.ADMIN, Rol.SECRETARIO, Rol.TESORERO)
   @ApiOperation({ summary: 'Panel principal: totales y variaciones recientes' })
   resumen() {
-    return this.statsService.resumen()
+    return this.statsService.resumen();
   }
 
   @Get('miembros')
   @Roles(Rol.ADMIN, Rol.SECRETARIO)
   @ApiOperation({ summary: 'Distribución de miembros por estado' })
   miembros() {
-    return this.statsService.porEstado()
+    return this.statsService.porEstado();
   }
 
   @Get('diagnosticos')
   @Roles(Rol.ADMIN, Rol.SECRETARIO)
-  @ApiOperation({ summary: 'Distribución por tipo de ataxia y confirmación diagnóstica (excluye representantes)' })
+  @ApiOperation({
+    summary:
+      'Distribución por tipo de ataxia y confirmación diagnóstica (excluye representantes)',
+  })
   diagnosticos() {
-    return this.statsService.porDiagnostico()
+    return this.statsService.porDiagnostico();
   }
 
   @Get('funcional')
   @Roles(Rol.ADMIN, Rol.SECRETARIO)
-  @ApiOperation({ summary: 'Distribución por nivel de movilidad — última evaluación por miembro (excluye representantes)' })
+  @ApiOperation({
+    summary:
+      'Distribución por nivel de movilidad — última evaluación por miembro (excluye representantes)',
+  })
   funcional() {
-    return this.statsService.porMovilidad()
+    return this.statsService.porMovilidad();
   }
 
   @Get('geografico')
   @Roles(Rol.ADMIN, Rol.SECRETARIO)
   @ApiOperation({ summary: 'Distribución de miembros por región' })
   geografico() {
-    return this.statsService.porRegion()
+    return this.statsService.porRegion();
   }
 }

@@ -3,23 +3,24 @@ import {
   ExecutionContext,
   Injectable,
   NestInterceptor,
-} from '@nestjs/common'
-import { Observable } from 'rxjs'
-import { map } from 'rxjs/operators'
+} from '@nestjs/common';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export interface ApiResponse<T> {
-  success: boolean
-  data: T
+  success: boolean;
+  data: T;
 }
 
 @Injectable()
-export class TransformInterceptor<T>
-  implements NestInterceptor<T, ApiResponse<T>>
-{
+export class TransformInterceptor<T> implements NestInterceptor<
+  T,
+  ApiResponse<T>
+> {
   intercept(
     _context: ExecutionContext,
     next: CallHandler,
   ): Observable<ApiResponse<T>> {
-    return next.handle().pipe(map((data) => ({ success: true, data })))
+    return next.handle().pipe(map((data) => ({ success: true, data })));
   }
 }

@@ -1,4 +1,4 @@
-import { ApiPropertyOptional } from '@nestjs/swagger'
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsDateString,
   IsEnum,
@@ -6,14 +6,16 @@ import {
   IsOptional,
   IsString,
   MaxLength,
-} from 'class-validator'
-import { ConfirmacionDiagnostico } from '../entities/diagnostico-clinico.entity'
+} from 'class-validator';
+import { ConfirmacionDiagnostico } from '../entities/diagnostico-clinico.entity';
 
 export class CreateDiagnosticoClinicoDto {
-  @ApiPropertyOptional({ description: 'ID del tipo de ataxia (ver GET /ataxia-types)' })
+  @ApiPropertyOptional({
+    description: 'ID del tipo de ataxia (ver GET /ataxia-types)',
+  })
   @IsOptional()
   @IsInt()
-  tipoAtaxiaId?: number
+  tipoAtaxiaId?: number;
 
   @ApiPropertyOptional({
     example: 'SCA2',
@@ -22,33 +24,42 @@ export class CreateDiagnosticoClinicoDto {
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  subtipo?: string
+  subtipo?: string;
 
-  @ApiPropertyOptional({ enum: ConfirmacionDiagnostico, default: ConfirmacionDiagnostico.CLINICO })
+  @ApiPropertyOptional({
+    enum: ConfirmacionDiagnostico,
+    default: ConfirmacionDiagnostico.CLINICO,
+  })
   @IsOptional()
   @IsEnum(ConfirmacionDiagnostico)
-  confirmacion?: ConfirmacionDiagnostico
+  confirmacion?: ConfirmacionDiagnostico;
 
-  @ApiPropertyOptional({ example: '2018-06-15', description: 'Fecha del diagnóstico (YYYY-MM-DD)' })
+  @ApiPropertyOptional({
+    example: '2018-06-15',
+    description: 'Fecha del diagnóstico (YYYY-MM-DD)',
+  })
   @IsOptional()
   @IsDateString()
-  fechaDiagnostico?: string
+  fechaDiagnostico?: string;
 
   @ApiPropertyOptional({ example: 'Hospital del Salvador' })
   @IsOptional()
   @IsString()
   @MaxLength(200)
-  institucion?: string
+  institucion?: string;
 
   @ApiPropertyOptional({ example: 'Dr. Juan Pérez' })
   @IsOptional()
   @IsString()
   @MaxLength(150)
-  medico?: string
+  medico?: string;
 
-  @ApiPropertyOptional({ example: 'Diagnóstico genético confirmado SCA2, estudio familiar en proceso' })
+  @ApiPropertyOptional({
+    example:
+      'Diagnóstico genético confirmado SCA2, estudio familiar en proceso',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(1000)
-  observaciones?: string
+  observaciones?: string;
 }

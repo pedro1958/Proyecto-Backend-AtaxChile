@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing'
-import { CreateUserDto } from './dto/create-user.dto'
-import { Rol } from './entities/user.entity'
-import { UsersController } from './users.controller'
-import { UsersService } from './users.service'
-import { SelfGuard } from '../auth/guards/self.guard'
+import { Test, TestingModule } from '@nestjs/testing';
+import { CreateUserDto } from './dto/create-user.dto';
+import { Rol } from './entities/user.entity';
+import { UsersController } from './users.controller';
+import { UsersService } from './users.service';
+import { SelfGuard } from '../auth/guards/self.guard';
 
 const mockUser = {
   id: 1,
@@ -18,11 +18,11 @@ const mockUser = {
   resetPasswordExpires: null,
   createdAt: new Date(),
   updatedAt: new Date(),
-}
+};
 
 describe('UsersController', () => {
-  let controller: UsersController
-  let service: jest.Mocked<UsersService>
+  let controller: UsersController;
+  let service: jest.Mocked<UsersService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -31,7 +31,12 @@ describe('UsersController', () => {
         {
           provide: UsersService,
           useValue: {
-            findAll: jest.fn().mockResolvedValue({ data: [mockUser], total: 1, page: 1, limit: 20 }),
+            findAll: jest.fn().mockResolvedValue({
+              data: [mockUser],
+              total: 1,
+              page: 1,
+              limit: 20,
+            }),
             findPerfil: jest.fn().mockResolvedValue({
               nombre: mockUser.nombre,
               email: mockUser.email,
@@ -53,36 +58,36 @@ describe('UsersController', () => {
     })
       .overrideGuard(SelfGuard)
       .useValue({ canActivate: () => true })
-      .compile()
+      .compile();
 
-    controller = module.get<UsersController>(UsersController)
-    service = module.get(UsersService)
-  })
+    controller = module.get<UsersController>(UsersController);
+    service = module.get(UsersService);
+  });
 
   it('should be defined', () => {
-    expect(controller).toBeDefined()
-  })
+    expect(controller).toBeDefined();
+  });
 
   describe('findAll', () => {
     it('debe llamar a service.findAll y retornar resultado paginado', async () => {
-      const result = await controller.findAll()
-      expect(service.findAll).toHaveBeenCalled()
-      expect(result.data).toHaveLength(1)
-      expect(result.total).toBe(1)
-    })
-  })
+      const result = await controller.findAll();
+      expect(service.findAll).toHaveBeenCalled();
+      expect(result.data).toHaveLength(1);
+      expect(result.total).toBe(1);
+    });
+  });
 
   describe('findOne', () => {
     it('debe llamar a service.findPerfil con el id correcto', async () => {
-      const result = await controller.findOne(1)
-      expect(service.findPerfil).toHaveBeenCalledWith(1)
+      const result = await controller.findOne(1);
+      expect(service.findPerfil).toHaveBeenCalledWith(1);
       expect(result).toEqual({
         nombre: mockUser.nombre,
         email: mockUser.email,
         rol: mockUser.rol,
-      })
-    })
-  })
+      });
+    });
+  });
 
   describe('create', () => {
     it('debe llamar a service.create con el DTO y retornar mensaje de confirmación', async () => {
@@ -90,51 +95,55 @@ describe('UsersController', () => {
         nombre: 'Admin',
         email: 'admin@test.cl',
         password: 'password123',
-      }
-      const result = await controller.create(dto)
-      expect(service.create).toHaveBeenCalledWith(dto)
-      expect(result).toHaveProperty('message')
-      expect(result.message).toContain('admin@test.cl')
-    })
-  })
+      };
+      const result = await controller.create(dto);
+      expect(service.create).toHaveBeenCalledWith(dto);
+      expect(result).toHaveProperty('message');
+      expect(result.message).toContain('admin@test.cl');
+    });
+  });
 
   describe('update', () => {
     it('debe llamar a service.update con id y DTO', async () => {
-      await controller.update(1, { nombre: 'Nuevo Nombre' })
-      expect(service.update).toHaveBeenCalledWith(1, { nombre: 'Nuevo Nombre' })
-    })
-  })
+      await controller.update(1, { nombre: 'Nuevo Nombre' });
+      expect(service.update).toHaveBeenCalledWith(1, {
+        nombre: 'Nuevo Nombre',
+      });
+    });
+  });
 
   describe('updateRol', () => {
     it('debe llamar a service.updateRol con id y DTO', async () => {
-      await controller.updateRol(1, { rol: Rol.SECRETARIO })
-      expect(service.updateRol).toHaveBeenCalledWith(1, { rol: Rol.SECRETARIO })
-    })
+      await controller.updateRol(1, { rol: Rol.SECRETARIO });
+      expect(service.updateRol).toHaveBeenCalledWith(1, {
+        rol: Rol.SECRETARIO,
+      });
+    });
 
     it('debe retornar el usuario con el rol actualizado', async () => {
-      const result = await controller.updateRol(1, { rol: Rol.SECRETARIO })
-      expect(result.rol).toBe(Rol.SECRETARIO)
-    })
-  })
+      const result = await controller.updateRol(1, { rol: Rol.SECRETARIO });
+      expect(result.rol).toBe(Rol.SECRETARIO);
+    });
+  });
 
   describe('toggleStatus', () => {
     it('debe llamar a service.toggleStatus con el id correcto', async () => {
-      await controller.toggleStatus(1)
-      expect(service.toggleStatus).toHaveBeenCalledWith(1)
-    })
-  })
+      await controller.toggleStatus(1);
+      expect(service.toggleStatus).toHaveBeenCalledWith(1);
+    });
+  });
 
   describe('remove', () => {
     it('debe llamar a service.remove con el id correcto', async () => {
-      await controller.remove(1)
-      expect(service.remove).toHaveBeenCalledWith(1)
-    })
-  })
+      await controller.remove(1);
+      expect(service.remove).toHaveBeenCalledWith(1);
+    });
+  });
 
   describe('activarCuenta', () => {
     it('debe llamar a service.activarCuenta con el token', async () => {
-      await controller.activarCuenta('token-uuid-123')
-      expect(service.activarCuenta).toHaveBeenCalledWith('token-uuid-123')
-    })
-  })
-})
+      await controller.activarCuenta('token-uuid-123');
+      expect(service.activarCuenta).toHaveBeenCalledWith('token-uuid-123');
+    });
+  });
+});

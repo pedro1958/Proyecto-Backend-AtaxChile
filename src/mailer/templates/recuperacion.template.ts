@@ -57,4 +57,4 @@ export const recuperacionTemplate = (url: string): string => `
   </table>
 </body>
 </html>
-`
+`;

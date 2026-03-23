@@ -1,4 +1,7 @@
-export const confirmacionEmailTemplate = (url: string, emailNuevo: string): string => `
+export const confirmacionEmailTemplate = (
+  url: string,
+  emailNuevo: string,
+): string => `
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -61,4 +64,4 @@ export const confirmacionEmailTemplate = (url: string, emailNuevo: string): stri
   </table>
 </body>
 </html>
-`
+`;

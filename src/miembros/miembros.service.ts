@@ -3,14 +3,16 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
-} from '@nestjs/common'
-import { InjectRepository } from '@nestjs/typeorm'
-import { DataSource, Repository } from 'typeorm'
-import { Miembro, EstadoSocio } from './entities/miembro.entity'
-import { CreateMiembroDto } from './dto/create-miembro.dto'
-import { UpdateMiembroDto } from './dto/update-miembro.dto'
-import { UpdateEstadoDto } from './dto/update-estado.dto'
-import { PaginatedResult } from '../common/types/response.types'
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { Miembro, EstadoSocio } from './entities/miembro.entity';
+import { CreateMiembroDto } from './dto/create-miembro.dto';
+import { UpdateMiembroDto } from './dto/update-miembro.dto';
+import { UpdateEstadoDto } from './dto/update-estado.dto';
+import { PaginatedResult } from '../common/types/response.types';
+import { AuditService } from '../audit/audit.service';
+import { AccionAudit } from '../audit/entities/audit-log.entity';
 
 @Injectable()
 export class MiembrosService {
@@ -18,28 +20,40 @@ export class MiembrosService {
     @InjectRepository(Miembro)
     private readonly miembrosRepository: Repository<Miembro>,
     private readonly dataSource: DataSource,
+    private readonly auditService: AuditService,
   ) {}
 
-  async create(dto: CreateMiembroDto): Promise<Miembro> {
-    const existe = await this.miembrosRepository.findOneBy({ rut: dto.rut })
-    if (existe) throw new ConflictException('Ya existe un miembro con este RUT')
+  async create(
+    dto: CreateMiembroDto,
+    usuarioId?: number,
+    ip?: string,
+  ): Promise<Miembro> {
+    const existe = await this.miembrosRepository.findOneBy({ rut: dto.rut });
+    if (existe)
+      throw new ConflictException('Ya existe un miembro con este RUT');
 
     if (dto.esRepresentante) {
       if (dto.tipoAtaxiaId != null) {
-        throw new BadRequestException('Un representante no puede tener tipoAtaxiaId')
+        throw new BadRequestException(
+          'Un representante no puede tener tipoAtaxiaId',
+        );
       }
 
-      const tieneRepresentadoId = dto.representadoId != null
-      const tieneRepresentadoTexto = dto.representadoNombre && dto.representadoRut
+      const tieneRepresentadoId = dto.representadoId != null;
+      const tieneRepresentadoTexto =
+        dto.representadoNombre && dto.representadoRut;
       if (!tieneRepresentadoId && !tieneRepresentadoTexto) {
         throw new BadRequestException(
           'Debe informar representadoId o representadoNombre y representadoRut',
-        )
+        );
       }
 
       if (dto.representadoId != null) {
-        const representado = await this.miembrosRepository.findOneBy({ id: dto.representadoId })
-        if (!representado) throw new NotFoundException('El miembro representado no existe')
+        const representado = await this.miembrosRepository.findOneBy({
+          id: dto.representadoId,
+        });
+        if (!representado)
+          throw new NotFoundException('El miembro representado no existe');
       }
     }
 
@@ -47,17 +61,29 @@ export class MiembrosService {
       ...dto,
       estado: EstadoSocio.ACTIVO,
       fechaCambioEstado: null,
-    })
-    return this.miembrosRepository.save(miembro)
+    });
+    const guardado = await this.miembrosRepository.save(miembro);
+
+    this.auditService
+      .registrar({
+        accion: AccionAudit.CREAR_MIEMBRO,
+        entidad: 'miembro',
+        entidadId: guardado.id,
+        usuarioId,
+        ip,
+      })
+      .catch(() => {});
+
+    return guardado;
   }
 
   async findAll(
     estado?: EstadoSocio,
     pagination: { page?: number; limit?: number } = {},
   ): Promise<PaginatedResult<Miembro>> {
-    const page = pagination.page ?? 1
-    const limit = pagination.limit ?? 20
-    const where = estado ? { estado } : {}
+    const page = pagination.page ?? 1;
+    const limit = pagination.limit ?? 20;
+    const where = estado ? { estado } : {};
 
     const [data, total] = await this.miembrosRepository.findAndCount({
       where,
@@ -65,46 +91,83 @@ export class MiembrosService {
       order: { nombre: 'ASC' },
       skip: (page - 1) * limit,
       take: limit,
-    })
+    });
 
-    return { data, total, page, limit }
+    return { data, total, page, limit };
   }
 
   async findOne(id: number): Promise<Miembro> {
     const miembro = await this.miembrosRepository.findOne({
       where: { id },
       relations: ['region', 'comuna', 'tipoAtaxia', 'user'],
-    })
-    if (!miembro) throw new NotFoundException('Miembro no encontrado')
-    return miembro
+    });
+    if (!miembro) throw new NotFoundException('Miembro no encontrado');
+    return miembro;
   }
 
-  async update(id: number, dto: UpdateMiembroDto): Promise<Miembro> {
-    const miembro = await this.miembrosRepository.findOneBy({ id })
-    if (!miembro) throw new NotFoundException('Miembro no encontrado')
-    Object.assign(miembro, dto)
-    return this.miembrosRepository.save(miembro)
+  async update(
+    id: number,
+    dto: UpdateMiembroDto,
+    usuarioId?: number,
+    ip?: string,
+  ): Promise<Miembro> {
+    const miembro = await this.miembrosRepository.findOneBy({ id });
+    if (!miembro) throw new NotFoundException('Miembro no encontrado');
+    Object.assign(miembro, dto);
+    const guardado = await this.miembrosRepository.save(miembro);
+
+    this.auditService
+      .registrar({
+        accion: AccionAudit.MODIFICAR_MIEMBRO,
+        entidad: 'miembro',
+        entidadId: id,
+        usuarioId,
+        ip,
+      })
+      .catch(() => {});
+
+    return guardado;
   }
 
-  async updateEstado(id: number, dto: UpdateEstadoDto): Promise<Miembro> {
-    const miembro = await this.miembrosRepository.findOneBy({ id })
-    if (!miembro) throw new NotFoundException('Miembro no encontrado')
-    miembro.estado = dto.estado
-    miembro.fechaCambioEstado = new Date().toISOString().split('T')[0]
-    return this.miembrosRepository.save(miembro)
+  async updateEstado(
+    id: number,
+    dto: UpdateEstadoDto,
+    usuarioId?: number,
+    ip?: string,
+  ): Promise<Miembro> {
+    const miembro = await this.miembrosRepository.findOneBy({ id });
+    if (!miembro) throw new NotFoundException('Miembro no encontrado');
+    miembro.estado = dto.estado;
+    miembro.fechaCambioEstado = new Date().toISOString().split('T')[0];
+    const guardado = await this.miembrosRepository.save(miembro);
+
+    this.auditService
+      .registrar({
+        accion: AccionAudit.CAMBIAR_ESTADO_MIEMBRO,
+        entidad: 'miembro',
+        entidadId: id,
+        usuarioId,
+        ip,
+        detalle: { estado: dto.estado },
+      })
+      .catch(() => {});
+
+    return guardado;
   }
 
   async vincularUsuario(id: number, userId: number): Promise<Miembro> {
     return this.dataSource.transaction(async (manager) => {
-      const miembro = await manager.findOneBy(Miembro, { id })
-      if (!miembro) throw new NotFoundException('Miembro no encontrado')
+      const miembro = await manager.findOneBy(Miembro, { id });
+      if (!miembro) throw new NotFoundException('Miembro no encontrado');
 
-      const yaVinculado = await manager.findOneBy(Miembro, { userId })
+      const yaVinculado = await manager.findOneBy(Miembro, { userId });
       if (yaVinculado && yaVinculado.id !== id)
-        throw new ConflictException('Este usuario ya está vinculado a otro miembro')
+        throw new ConflictException(
+          'Este usuario ya está vinculado a otro miembro',
+        );
 
-      miembro.userId = userId
-      return manager.save(miembro)
-    })
+      miembro.userId = userId;
+      return manager.save(miembro);
+    });
   }
 }

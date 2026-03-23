@@ -6,22 +6,22 @@ import {
   ParseIntPipe,
   Patch,
   Post,
-} from '@nestjs/common'
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiParam,
   ApiResponse,
   ApiTags,
-} from '@nestjs/swagger'
-import { GeoService } from './geo.service'
-import { CreateRegionDto } from './dto/create-region.dto'
-import { UpdateRegionDto } from './dto/update-region.dto'
-import { CreateComunaDto } from './dto/create-comuna.dto'
-import { UpdateComunaDto } from './dto/update-comuna.dto'
-import { Roles } from '../auth/decorators/roles.decorator'
-import { Rol } from '../users/entities/user.entity'
-import { Public } from '../auth/decorators/public.decorator'
+} from '@nestjs/swagger';
+import { GeoService } from './geo.service';
+import { CreateRegionDto } from './dto/create-region.dto';
+import { UpdateRegionDto } from './dto/update-region.dto';
+import { CreateComunaDto } from './dto/create-comuna.dto';
+import { UpdateComunaDto } from './dto/update-comuna.dto';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Rol } from '../users/entities/user.entity';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('Geografía')
 @Controller('geo')
@@ -35,7 +35,7 @@ export class GeoController {
   @ApiOperation({ summary: 'Listar todas las regiones de Chile' })
   @ApiResponse({ status: 200, description: 'Lista de regiones' })
   findAllRegiones() {
-    return this.geoService.findAllRegiones()
+    return this.geoService.findAllRegiones();
   }
 
   @Public()
@@ -45,7 +45,7 @@ export class GeoController {
   @ApiResponse({ status: 200, description: 'Datos de la región' })
   @ApiResponse({ status: 404, description: 'Región no encontrada' })
   findOneRegion(@Param('id', ParseIntPipe) id: number) {
-    return this.geoService.findOneRegion(id)
+    return this.geoService.findOneRegion(id);
   }
 
   @Roles(Rol.SUPERADMIN, Rol.ADMIN)
@@ -53,10 +53,16 @@ export class GeoController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Crear una nueva región' })
   @ApiResponse({ status: 201, description: 'Región creada' })
-  @ApiResponse({ status: 403, description: 'Sin permisos (requiere superadmin o admin)' })
-  @ApiResponse({ status: 409, description: 'Ya existe una región con ese nombre' })
+  @ApiResponse({
+    status: 403,
+    description: 'Sin permisos (requiere superadmin o admin)',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Ya existe una región con ese nombre',
+  })
   createRegion(@Body() dto: CreateRegionDto) {
-    return this.geoService.createRegion(dto)
+    return this.geoService.createRegion(dto);
   }
 
   @Roles(Rol.SUPERADMIN, Rol.ADMIN)
@@ -65,10 +71,16 @@ export class GeoController {
   @ApiOperation({ summary: 'Modificar el nombre de una región' })
   @ApiParam({ name: 'id', description: 'ID de la región' })
   @ApiResponse({ status: 200, description: 'Región actualizada' })
-  @ApiResponse({ status: 403, description: 'Sin permisos (requiere superadmin o admin)' })
+  @ApiResponse({
+    status: 403,
+    description: 'Sin permisos (requiere superadmin o admin)',
+  })
   @ApiResponse({ status: 404, description: 'Región no encontrada' })
-  updateRegion(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateRegionDto) {
-    return this.geoService.updateRegion(id, dto)
+  updateRegion(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateRegionDto,
+  ) {
+    return this.geoService.updateRegion(id, dto);
   }
 
   // ── Comunas ───────────────────────────────────────────────────────────────
@@ -80,7 +92,7 @@ export class GeoController {
   @ApiResponse({ status: 200, description: 'Lista de comunas de la región' })
   @ApiResponse({ status: 404, description: 'Región no encontrada' })
   findComunasByRegion(@Param('regionId', ParseIntPipe) regionId: number) {
-    return this.geoService.findComunasByRegion(regionId)
+    return this.geoService.findComunasByRegion(regionId);
   }
 
   @Public()
@@ -90,7 +102,7 @@ export class GeoController {
   @ApiResponse({ status: 200, description: 'Datos de la comuna' })
   @ApiResponse({ status: 404, description: 'Comuna no encontrada' })
   findOneComuna(@Param('id', ParseIntPipe) id: number) {
-    return this.geoService.findOneComuna(id)
+    return this.geoService.findOneComuna(id);
   }
 
   @Roles(Rol.SUPERADMIN, Rol.ADMIN)
@@ -98,10 +110,13 @@ export class GeoController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Crear una nueva comuna' })
   @ApiResponse({ status: 201, description: 'Comuna creada' })
-  @ApiResponse({ status: 403, description: 'Sin permisos (requiere superadmin o admin)' })
+  @ApiResponse({
+    status: 403,
+    description: 'Sin permisos (requiere superadmin o admin)',
+  })
   @ApiResponse({ status: 404, description: 'Región asociada no encontrada' })
   createComuna(@Body() dto: CreateComunaDto) {
-    return this.geoService.createComuna(dto)
+    return this.geoService.createComuna(dto);
   }
 
   @Roles(Rol.SUPERADMIN, Rol.ADMIN)
@@ -110,9 +125,15 @@ export class GeoController {
   @ApiOperation({ summary: 'Modificar nombre o región de una comuna' })
   @ApiParam({ name: 'id', description: 'ID de la comuna' })
   @ApiResponse({ status: 200, description: 'Comuna actualizada' })
-  @ApiResponse({ status: 403, description: 'Sin permisos (requiere superadmin o admin)' })
+  @ApiResponse({
+    status: 403,
+    description: 'Sin permisos (requiere superadmin o admin)',
+  })
   @ApiResponse({ status: 404, description: 'Comuna no encontrada' })
-  updateComuna(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateComunaDto) {
-    return this.geoService.updateComuna(id, dto)
+  updateComuna(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateComunaDto,
+  ) {
+    return this.geoService.updateComuna(id, dto);
   }
 }

@@ -1,8 +1,8 @@
-import { Injectable, OnApplicationBootstrap } from '@nestjs/common'
-import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
-import { Region } from './entities/region.entity'
-import { Comuna } from './entities/comuna.entity'
+import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Region } from './entities/region.entity';
+import { Comuna } from './entities/comuna.entity';
 
 const SEED_DATA: { nombre: string; comunas: string[] }[] = [
   {
@@ -11,7 +11,15 @@ const SEED_DATA: { nombre: string; comunas: string[] }[] = [
   },
   {
     nombre: 'Región de Tarapacá',
-    comunas: ['Iquique', 'Alto Hospicio', 'Pozo Almonte', 'Camiña', 'Colchane', 'Huara', 'Pica'],
+    comunas: [
+      'Iquique',
+      'Alto Hospicio',
+      'Pozo Almonte',
+      'Camiña',
+      'Colchane',
+      'Huara',
+      'Pica',
+    ],
   },
   {
     nombre: 'Región de Antofagasta',
@@ -396,7 +404,7 @@ const SEED_DATA: { nombre: string; comunas: string[] }[] = [
       'Cisnes',
       'Guaitecas',
       'Cochrane',
-      'O\'Higgins',
+      "O'Higgins",
       'Tortel',
       'Chile Chico',
       'Río Ibáñez',
@@ -418,7 +426,7 @@ const SEED_DATA: { nombre: string; comunas: string[] }[] = [
       'Torres del Paine',
     ],
   },
-]
+];
 
 @Injectable()
 export class GeoSeeder implements OnApplicationBootstrap {
@@ -430,17 +438,17 @@ export class GeoSeeder implements OnApplicationBootstrap {
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
-    const count = await this.regionesRepository.count()
-    if (count > 0) return
+    const count = await this.regionesRepository.count();
+    if (count > 0) return;
 
     for (const item of SEED_DATA) {
-      const region = this.regionesRepository.create({ nombre: item.nombre })
-      const regionGuardada = await this.regionesRepository.save(region)
+      const region = this.regionesRepository.create({ nombre: item.nombre });
+      const regionGuardada = await this.regionesRepository.save(region);
 
       const comunas = item.comunas.map((nombre) =>
         this.comunasRepository.create({ nombre, regionId: regionGuardada.id }),
-      )
-      await this.comunasRepository.save(comunas)
+      );
+      await this.comunasRepository.save(comunas);
     }
   }
 }

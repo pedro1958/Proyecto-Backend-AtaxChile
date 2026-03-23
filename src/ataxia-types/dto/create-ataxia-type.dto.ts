@@ -1,19 +1,29 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator'
-import { GrupoAtaxia } from '../entities/ataxia-type.entity'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { GrupoAtaxia } from '../entities/ataxia-type.entity';
 
 export class CreateAtaxiaTypeDto {
-  @ApiProperty({ example: 'SCA1 (Ataxia Espinocerebelosa tipo 1)', description: 'Nombre clínico del tipo de ataxia' })
+  @ApiProperty({
+    example: 'SCA1 (Ataxia Espinocerebelosa tipo 1)',
+    description: 'Nombre clínico del tipo de ataxia',
+  })
   @IsString()
   @IsNotEmpty()
-  nombre: string
+  nombre: string;
 
-  @ApiProperty({ enum: GrupoAtaxia, example: GrupoAtaxia.HEREDITARIA, description: 'Grupo de clasificación del tipo de ataxia' })
+  @ApiProperty({
+    enum: GrupoAtaxia,
+    example: GrupoAtaxia.HEREDITARIA,
+    description: 'Grupo de clasificación del tipo de ataxia',
+  })
   @IsEnum(GrupoAtaxia)
-  grupo: GrupoAtaxia
+  grupo: GrupoAtaxia;
 
-  @ApiPropertyOptional({ example: 'Ataxia autosómica dominante por expansión CAG en el gen ATXN1.', description: 'Descripción clínica opcional' })
+  @ApiPropertyOptional({
+    example: 'Ataxia autosómica dominante por expansión CAG en el gen ATXN1.',
+    description: 'Descripción clínica opcional',
+  })
   @IsString()
   @IsOptional()
-  descripcion?: string
+  descripcion?: string;
 }

@@ -1,9 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger'
-import { IsNotEmpty, IsString } from 'class-validator'
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateRegionDto {
-  @ApiProperty({ example: 'Región Metropolitana de Santiago', description: 'Nombre oficial de la región' })
+  @ApiProperty({
+    example: 'Región Metropolitana de Santiago',
+    description: 'Nombre oficial de la región',
+  })
   @IsString()
   @IsNotEmpty()
-  nombre: string
+  nombre: string;
 }

@@ -58,13 +58,17 @@ export class CreateMiembroDto {
   @ApiPropertyOptional({ example: '+56912345678' })
   @IsOptional()
   @IsString()
-  @Matches(/^\+?[\d\s\-()+]{7,20}$/, { message: 'Formato de teléfono inválido' })
+  @Matches(/^\+?[\d\s\-()+]{7,20}$/, {
+    message: 'Formato de teléfono inválido',
+  })
   telefono?: string;
 
   @ApiPropertyOptional({ example: '+56987654321' })
   @IsOptional()
   @IsString()
-  @Matches(/^\+?[\d\s\-()+]{7,20}$/, { message: 'Formato de teléfono inválido' })
+  @Matches(/^\+?[\d\s\-()+]{7,20}$/, {
+    message: 'Formato de teléfono inválido',
+  })
   celular?: string;
 
   @ApiPropertyOptional({ example: 'maria@correo.cl' })
@@ -100,29 +104,44 @@ export class CreateMiembroDto {
   @IsInt()
   tipoAtaxiaId?: number;
 
-  @ApiPropertyOptional({ default: false, description: 'false = paciente con ataxia, true = representante (familiar/tutor/cuidador)' })
+  @ApiPropertyOptional({
+    default: false,
+    description:
+      'false = paciente con ataxia, true = representante (familiar/tutor/cuidador)',
+  })
   @IsOptional()
   @IsBoolean()
   esRepresentante?: boolean;
 
-  @ApiPropertyOptional({ enum: TipoRepresentacion, description: 'Obligatorio si esRepresentante = true' })
+  @ApiPropertyOptional({
+    enum: TipoRepresentacion,
+    description: 'Obligatorio si esRepresentante = true',
+  })
   @ValidateIf((o) => o.esRepresentante === true)
   @IsNotEmpty()
   @IsEnum(TipoRepresentacion)
   tipoRepresentacion?: TipoRepresentacion;
 
-  @ApiPropertyOptional({ description: 'ID del miembro representado (si ya está registrado en el sistema)' })
+  @ApiPropertyOptional({
+    description:
+      'ID del miembro representado (si ya está registrado en el sistema)',
+  })
   @IsOptional()
   @IsInt()
   representadoId?: number;
 
-  @ApiPropertyOptional({ description: 'Nombre de la persona representada (si no está registrada)' })
+  @ApiPropertyOptional({
+    description: 'Nombre de la persona representada (si no está registrada)',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(150)
   representadoNombre?: string;
 
-  @ApiPropertyOptional({ example: '12345678-9', description: 'RUT de la persona representada (si no está registrada)' })
+  @ApiPropertyOptional({
+    example: '12345678-9',
+    description: 'RUT de la persona representada (si no está registrada)',
+  })
   @IsOptional()
   @IsString()
   representadoRut?: string;

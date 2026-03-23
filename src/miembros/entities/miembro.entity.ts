@@ -7,11 +7,11 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from 'typeorm'
-import { Region } from '../../geo/entities/region.entity'
-import { Comuna } from '../../geo/entities/comuna.entity'
-import { AtaxiaType } from '../../ataxia-types/entities/ataxia-type.entity'
-import { User } from '../../users/entities/user.entity'
+} from 'typeorm';
+import { Region } from '../../geo/entities/region.entity';
+import { Comuna } from '../../geo/entities/comuna.entity';
+import { AtaxiaType } from '../../ataxia-types/entities/ataxia-type.entity';
+import { User } from '../../users/entities/user.entity';
 
 export enum EstadoSocio {
   ACTIVO = 'activo',
@@ -39,102 +39,102 @@ export enum TipoRepresentacion {
 @Entity('miembros')
 export class Miembro {
   @PrimaryGeneratedColumn()
-  id: number
+  id: number;
 
   // ── Identidad ─────────────────────────────────────────────────────────────
   @Column({ unique: true })
-  rut: string
+  rut: string;
 
   @Column()
-  nombre: string
+  nombre: string;
 
   @Column({ type: 'date', nullable: true })
-  fechaNacimiento: string | null
+  fechaNacimiento: string | null;
 
   @Column({ type: 'varchar', nullable: true })
-  estadoCivil: EstadoCivil | null
+  estadoCivil: EstadoCivil | null;
 
   @Column({ type: 'varchar', nullable: true })
-  profesion: string | null
+  profesion: string | null;
 
   // ── Contacto ──────────────────────────────────────────────────────────────
   @Column({ type: 'varchar', nullable: true })
-  telefono: string | null
+  telefono: string | null;
 
   @Column({ type: 'varchar', nullable: true })
-  celular: string | null
+  celular: string | null;
 
   @Column({ type: 'varchar', nullable: true })
-  email: string | null
+  email: string | null;
 
   @Column({ type: 'varchar', nullable: true })
-  direccion: string | null
+  direccion: string | null;
 
   // ── Geo ───────────────────────────────────────────────────────────────────
   @Column({ nullable: true })
-  regionId: number | null
+  regionId: number | null;
 
   @ManyToOne(() => Region, { nullable: true, eager: false })
   @JoinColumn({ name: 'regionId' })
-  region: Region | null
+  region: Region | null;
 
   @Column({ nullable: true })
-  comunaId: number | null
+  comunaId: number | null;
 
   @ManyToOne(() => Comuna, { nullable: true, eager: false })
   @JoinColumn({ name: 'comunaId' })
-  comuna: Comuna | null
+  comuna: Comuna | null;
 
   // ── Representación ────────────────────────────────────────────────────────
   @Column({ default: false })
-  esRepresentante: boolean
+  esRepresentante: boolean;
 
   @Column({ type: 'varchar', nullable: true })
-  tipoRepresentacion: TipoRepresentacion | null
+  tipoRepresentacion: TipoRepresentacion | null;
 
   @Column({ nullable: true })
-  representadoId: number | null
+  representadoId: number | null;
 
   @ManyToOne(() => Miembro, { nullable: true, eager: false })
   @JoinColumn({ name: 'representadoId' })
-  representado: Miembro | null
+  representado: Miembro | null;
 
   @Column({ type: 'varchar', nullable: true })
-  representadoNombre: string | null
+  representadoNombre: string | null;
 
   @Column({ type: 'varchar', nullable: true })
-  representadoRut: string | null
+  representadoRut: string | null;
 
   // ── Diagnóstico ───────────────────────────────────────────────────────────
   @Column({ nullable: true })
-  tipoAtaxiaId: number | null
+  tipoAtaxiaId: number | null;
 
   @ManyToOne(() => AtaxiaType, { nullable: true, eager: false })
   @JoinColumn({ name: 'tipoAtaxiaId' })
-  tipoAtaxia: AtaxiaType | null
+  tipoAtaxia: AtaxiaType | null;
 
   // ── Estado del socio ──────────────────────────────────────────────────────
   @Column({ type: 'varchar', default: EstadoSocio.ACTIVO })
-  estado: EstadoSocio
+  estado: EstadoSocio;
 
   @Column({ type: 'date' })
-  fechaInscripcion: string
+  fechaInscripcion: string;
 
   @Column({ type: 'date', nullable: true })
-  fechaCambioEstado: string | null
+  fechaCambioEstado: string | null;
 
   // ── Cuenta de sistema (opcional) ──────────────────────────────────────────
   @Column({ nullable: true, unique: true })
-  userId: number | null
+  userId: number | null;
 
   @OneToOne(() => User, { nullable: true, eager: false })
   @JoinColumn({ name: 'userId' })
-  user: User | null
+  user: User | null;
 
   // ── Auditoría ─────────────────────────────────────────────────────────────
   @CreateDateColumn()
-  createdAt: Date
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date
+  updatedAt: Date;
 }

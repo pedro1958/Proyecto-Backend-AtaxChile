@@ -2,22 +2,23 @@ import {
   Body,
   Controller,
   Get,
+  Ip,
   Param,
   ParseIntPipe,
   Post,
-} from '@nestjs/common'
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiParam,
   ApiResponse,
   ApiTags,
-} from '@nestjs/swagger'
-import { EvaluacionFuncionalService } from './evaluacion-funcional.service'
-import { CreateEvaluacionFuncionalDto } from './dto/create-evaluacion-funcional.dto'
-import { Roles } from '../auth/decorators/roles.decorator'
-import { Rol } from '../users/entities/user.entity'
-import { CurrentUser } from '../auth/decorators/current-user.decorator'
+} from '@nestjs/swagger';
+import { EvaluacionFuncionalService } from './evaluacion-funcional.service';
+import { CreateEvaluacionFuncionalDto } from './dto/create-evaluacion-funcional.dto';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Rol } from '../users/entities/user.entity';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @ApiTags('Evaluaciones Funcionales')
 @ApiBearerAuth()
@@ -40,26 +41,35 @@ export class EvaluacionFuncionalController {
     @Param('miembroId', ParseIntPipe) miembroId: number,
     @Body() dto: CreateEvaluacionFuncionalDto,
     @CurrentUser() user: { id: number },
+    @Ip() ip: string,
   ) {
-    return this.service.create(miembroId, dto, user.id)
+    return this.service.create(miembroId, dto, user.id, ip);
   }
 
   @Get()
   @Roles(Rol.ADMIN, Rol.SECRETARIO, Rol.TESORERO)
-  @ApiOperation({ summary: 'Historial completo de evaluaciones funcionales (ordenado por fecha desc)' })
+  @ApiOperation({
+    summary:
+      'Historial completo de evaluaciones funcionales (ordenado por fecha desc)',
+  })
   @ApiParam({ name: 'miembroId', description: 'ID del miembro' })
   @ApiResponse({ status: 200, description: 'Lista de evaluaciones' })
   findAll(@Param('miembroId', ParseIntPipe) miembroId: number) {
-    return this.service.findAllByMiembro(miembroId)
+    return this.service.findAllByMiembro(miembroId);
   }
 
   @Get('ultima')
   @Roles(Rol.ADMIN, Rol.SECRETARIO, Rol.TESORERO)
-  @ApiOperation({ summary: 'Última evaluación funcional (estado funcional actual del socio)' })
+  @ApiOperation({
+    summary: 'Última evaluación funcional (estado funcional actual del socio)',
+  })
   @ApiParam({ name: 'miembroId', description: 'ID del miembro' })
   @ApiResponse({ status: 200, description: 'Evaluación más reciente' })
-  @ApiResponse({ status: 404, description: 'No hay evaluaciones para este miembro' })
+  @ApiResponse({
+    status: 404,
+    description: 'No hay evaluaciones para este miembro',
+  })
   findUltima(@Param('miembroId', ParseIntPipe) miembroId: number) {
-    return this.service.findUltimaByMiembro(miembroId)
+    return this.service.findUltimaByMiembro(miembroId);
   }
 }

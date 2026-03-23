@@ -4,7 +4,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from 'typeorm'
+} from 'typeorm';
 
 export enum GrupoAtaxia {
   HEREDITARIA = 'hereditaria',
@@ -16,23 +16,23 @@ export enum GrupoAtaxia {
 @Entity('ataxia_types')
 export class AtaxiaType {
   @PrimaryGeneratedColumn()
-  id: number
+  id: number;
 
   @Column()
-  nombre: string
+  nombre: string;
 
   @Column({ type: 'varchar' })
-  grupo: GrupoAtaxia
+  grupo: GrupoAtaxia;
 
   @Column({ nullable: true, type: 'varchar' })
-  descripcion: string | null
+  descripcion: string | null;
 
   @Column({ default: true })
-  activo: boolean
+  activo: boolean;
 
   @CreateDateColumn()
-  createdAt: Date
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date
+  updatedAt: Date;
 }

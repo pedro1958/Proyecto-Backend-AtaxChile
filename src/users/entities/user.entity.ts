@@ -4,7 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-} from 'typeorm'
+} from 'typeorm';
 
 export enum Rol {
   SUPERADMIN = 'superadmin',
@@ -17,56 +17,56 @@ export enum Rol {
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
-  id: number
+  id: number;
 
   @Column({ unique: true })
-  email: string
+  email: string;
 
   @Column()
-  nombre: string
+  nombre: string;
 
   @Column()
-  password: string
+  password: string;
 
   @Column({ type: 'simple-enum', enum: Rol, default: Rol.USUARIO })
-  rol: Rol
+  rol: Rol;
 
   @Column({ default: true })
-  activo: boolean
+  activo: boolean;
 
   @Column({ default: false })
-  cuentaActivada: boolean
+  cuentaActivada: boolean;
 
   @Column({ type: 'varchar', nullable: true })
-  tokenActivacion: string | null
+  tokenActivacion: string | null;
 
   @Column({ type: 'timestamptz', nullable: true })
-  tokenExpiracion: Date | null
+  tokenExpiracion: Date | null;
 
   @Column({ type: 'varchar', nullable: true })
-  resetPasswordToken: string | null
+  resetPasswordToken: string | null;
 
   @Column({ type: 'timestamptz', nullable: true })
-  resetPasswordExpires: Date | null
+  resetPasswordExpires: Date | null;
 
   @Column({ type: 'varchar', nullable: true })
-  refreshToken: string | null
+  refreshToken: string | null;
 
   @Column({ type: 'timestamptz', nullable: true })
-  refreshTokenExpires: Date | null
+  refreshTokenExpires: Date | null;
 
   @Column({ type: 'varchar', nullable: true })
-  emailPendiente: string | null
+  emailPendiente: string | null;
 
   @Column({ type: 'varchar', nullable: true })
-  tokenEmailCambio: string | null
+  tokenEmailCambio: string | null;
 
   @Column({ type: 'timestamptz', nullable: true })
-  tokenEmailCambioExpires: Date | null
+  tokenEmailCambioExpires: Date | null;
 
   @CreateDateColumn()
-  createdAt: Date
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date
+  updatedAt: Date;
 }

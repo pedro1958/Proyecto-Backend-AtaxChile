@@ -4,12 +4,13 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Ip,
   Param,
   ParseIntPipe,
   Patch,
   Post,
   Query,
-} from '@nestjs/common'
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -17,16 +18,17 @@ import {
   ApiQuery,
   ApiResponse,
   ApiTags,
-} from '@nestjs/swagger'
-import { MiembrosService } from './miembros.service'
-import { CreateMiembroDto } from './dto/create-miembro.dto'
-import { UpdateMiembroDto } from './dto/update-miembro.dto'
-import { UpdateEstadoDto } from './dto/update-estado.dto'
-import { VincularUsuarioDto } from './dto/vincular-usuario.dto'
-import { EstadoSocio } from './entities/miembro.entity'
-import { Roles } from '../auth/decorators/roles.decorator'
-import { Rol } from '../users/entities/user.entity'
-import { PaginationDto } from '../common/dto/pagination.dto'
+} from '@nestjs/swagger';
+import { MiembrosService } from './miembros.service';
+import { CreateMiembroDto } from './dto/create-miembro.dto';
+import { UpdateMiembroDto } from './dto/update-miembro.dto';
+import { UpdateEstadoDto } from './dto/update-estado.dto';
+import { VincularUsuarioDto } from './dto/vincular-usuario.dto';
+import { EstadoSocio } from './entities/miembro.entity';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Rol } from '../users/entities/user.entity';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @ApiTags('Miembros')
 @ApiBearerAuth()
@@ -38,23 +40,43 @@ export class MiembrosController {
   @Roles(Rol.ADMIN, Rol.SECRETARIO)
   @ApiOperation({ summary: 'Registrar nuevo socio' })
   @ApiResponse({ status: 201, description: 'Socio registrado correctamente' })
-  @ApiResponse({ status: 409, description: 'Ya existe un miembro con este RUT' })
-  create(@Body() dto: CreateMiembroDto) {
-    return this.miembrosService.create(dto)
+  @ApiResponse({
+    status: 409,
+    description: 'Ya existe un miembro con este RUT',
+  })
+  create(
+    @Body() dto: CreateMiembroDto,
+    @CurrentUser() user: { id: number },
+    @Ip() ip: string,
+  ) {
+    return this.miembrosService.create(dto, user.id, ip);
   }
 
   @Get()
   @Roles(Rol.ADMIN, Rol.SECRETARIO, Rol.TESORERO)
   @ApiOperation({ summary: 'Listar socios' })
-  @ApiQuery({ name: 'estado', enum: EstadoSocio, required: false, description: 'Filtrar por estado del socio' })
-  @ApiQuery({ name: 'page', required: false, description: 'Número de página (default: 1)' })
-  @ApiQuery({ name: 'limit', required: false, description: 'Registros por página (default: 20, máx: 100)' })
+  @ApiQuery({
+    name: 'estado',
+    enum: EstadoSocio,
+    required: false,
+    description: 'Filtrar por estado del socio',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Número de página (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Registros por página (default: 20, máx: 100)',
+  })
   @ApiResponse({ status: 200, description: 'Lista paginada de socios' })
   findAll(
     @Query('estado') estado?: EstadoSocio,
     @Query() pagination?: PaginationDto,
   ) {
-    return this.miembrosService.findAll(estado, pagination)
+    return this.miembrosService.findAll(estado, pagination);
   }
 
   @Get(':id')
@@ -64,7 +86,7 @@ export class MiembrosController {
   @ApiResponse({ status: 200, description: 'Datos del socio' })
   @ApiResponse({ status: 404, description: 'Miembro no encontrado' })
   findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.miembrosService.findOne(id)
+    return this.miembrosService.findOne(id);
   }
 
   @Patch(':id')
@@ -76,21 +98,27 @@ export class MiembrosController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateMiembroDto,
+    @CurrentUser() user: { id: number },
+    @Ip() ip: string,
   ) {
-    return this.miembrosService.update(id, dto)
+    return this.miembrosService.update(id, dto, user.id, ip);
   }
 
   @Patch(':id/estado')
   @Roles(Rol.ADMIN)
-  @ApiOperation({ summary: 'Cambiar estado del socio (baja, suspensión, fallecimiento)' })
+  @ApiOperation({
+    summary: 'Cambiar estado del socio (baja, suspensión, fallecimiento)',
+  })
   @ApiParam({ name: 'id', description: 'ID del miembro' })
   @ApiResponse({ status: 200, description: 'Estado actualizado' })
   @ApiResponse({ status: 404, description: 'Miembro no encontrado' })
   updateEstado(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateEstadoDto,
+    @CurrentUser() user: { id: number },
+    @Ip() ip: string,
   ) {
-    return this.miembrosService.updateEstado(id, dto)
+    return this.miembrosService.updateEstado(id, dto, user.id, ip);
   }
 
   @Patch(':id/vincular-usuario')
@@ -100,11 +128,14 @@ export class MiembrosController {
   @ApiParam({ name: 'id', description: 'ID del miembro' })
   @ApiResponse({ status: 200, description: 'Usuario vinculado correctamente' })
   @ApiResponse({ status: 404, description: 'Miembro no encontrado' })
-  @ApiResponse({ status: 409, description: 'El usuario ya está vinculado a otro miembro' })
+  @ApiResponse({
+    status: 409,
+    description: 'El usuario ya está vinculado a otro miembro',
+  })
   vincularUsuario(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: VincularUsuarioDto,
   ) {
-    return this.miembrosService.vincularUsuario(id, dto.userId)
+    return this.miembrosService.vincularUsuario(id, dto.userId);
   }
 }

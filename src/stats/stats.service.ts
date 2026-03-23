@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common'
-import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
-import { Miembro, EstadoSocio } from '../miembros/entities/miembro.entity'
-import { DiagnosticoClinico } from '../diagnostico-clinico/entities/diagnostico-clinico.entity'
-import { EvaluacionFuncional } from '../evaluacion-funcional/entities/evaluacion-funcional.entity'
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Miembro, EstadoSocio } from '../miembros/entities/miembro.entity';
+import { DiagnosticoClinico } from '../diagnostico-clinico/entities/diagnostico-clinico.entity';
+import { EvaluacionFuncional } from '../evaluacion-funcional/entities/evaluacion-funcional.entity';
 
 @Injectable()
 export class StatsService {
@@ -17,17 +17,17 @@ export class StatsService {
   ) {}
 
   async resumen() {
-    const total = await this.miembroRepo.count()
+    const total = await this.miembroRepo.count();
     const activos = await this.miembroRepo.count({
       where: { estado: EstadoSocio.ACTIVO },
-    })
-    const hace30dias = new Date()
-    hace30dias.setDate(hace30dias.getDate() - 30)
+    });
+    const hace30dias = new Date();
+    hace30dias.setDate(hace30dias.getDate() - 30);
     const nuevosUltimos30Dias = await this.miembroRepo
       .createQueryBuilder('m')
       .where('m.createdAt >= :fecha', { fecha: hace30dias })
-      .getCount()
-    return { total, activos, nuevosUltimos30Dias }
+      .getCount();
+    return { total, activos, nuevosUltimos30Dias };
   }
 
   async porEstado() {
@@ -37,7 +37,7 @@ export class StatsService {
       .addSelect('COUNT(*)', 'total')
       .groupBy('m.estado')
       .orderBy('total', 'DESC')
-      .getRawMany()
+      .getRawMany();
   }
 
   async porDiagnostico() {
@@ -52,7 +52,7 @@ export class StatsService {
       .groupBy('ta.nombre')
       .addGroupBy('d.confirmacion')
       .orderBy('total', 'DESC')
-      .getRawMany()
+      .getRawMany();
   }
 
   async porMovilidad() {
@@ -62,17 +62,17 @@ export class StatsService {
       .select('e.nivelMovilidad', 'nivelMovilidad')
       .addSelect('COUNT(DISTINCT e.miembroId)', 'total')
       .where('m.esRepresentante = false')
-      .andWhere(qb => {
+      .andWhere((qb) => {
         const sub = qb
           .subQuery()
           .select('MAX(e2.id)')
           .from(EvaluacionFuncional, 'e2')
           .where('e2.miembroId = e.miembroId')
-          .getQuery()
-        return `e.id IN ${sub}`
+          .getQuery();
+        return `e.id IN ${sub}`;
       })
       .groupBy('e.nivelMovilidad')
-      .getRawMany()
+      .getRawMany();
   }
 
   async porRegion() {
@@ -84,6 +84,6 @@ export class StatsService {
       .where('m.esRepresentante = false')
       .groupBy('r.nombre')
       .orderBy('total', 'DESC')
-      .getRawMany()
+      .getRawMany();
   }
 }

@@ -1,11 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing'
-import { MiembrosController } from './miembros.controller'
-import { MiembrosService } from './miembros.service'
-import { CreateMiembroDto } from './dto/create-miembro.dto'
-import { UpdateMiembroDto } from './dto/update-miembro.dto'
-import { UpdateEstadoDto } from './dto/update-estado.dto'
-import { VincularUsuarioDto } from './dto/vincular-usuario.dto'
-import { Miembro, EstadoSocio, EstadoCivil, TipoRepresentacion } from './entities/miembro.entity'
+import { Test, TestingModule } from '@nestjs/testing';
+import { MiembrosController } from './miembros.controller';
+import { MiembrosService } from './miembros.service';
+import { CreateMiembroDto } from './dto/create-miembro.dto';
+import { UpdateMiembroDto } from './dto/update-miembro.dto';
+import { UpdateEstadoDto } from './dto/update-estado.dto';
+import { VincularUsuarioDto } from './dto/vincular-usuario.dto';
+import {
+  Miembro,
+  EstadoSocio,
+  EstadoCivil,
+  TipoRepresentacion,
+} from './entities/miembro.entity';
 
 const mockMiembro: Miembro = {
   id: 1,
@@ -37,18 +42,18 @@ const mockMiembro: Miembro = {
   user: null,
   createdAt: new Date(),
   updatedAt: new Date(),
-}
+};
 
 const mockPaginatedResult = {
   data: [mockMiembro],
   total: 1,
   page: 1,
   limit: 20,
-}
+};
 
 describe('MiembrosController', () => {
-  let controller: MiembrosController
-  let service: jest.Mocked<MiembrosService>
+  let controller: MiembrosController;
+  let service: jest.Mocked<MiembrosService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -73,118 +78,129 @@ describe('MiembrosController', () => {
           },
         },
       ],
-    }).compile()
+    }).compile();
 
-    controller = module.get<MiembrosController>(MiembrosController)
-    service = module.get(MiembrosService)
-  })
+    controller = module.get<MiembrosController>(MiembrosController);
+    service = module.get(MiembrosService);
+  });
 
   it('should be defined', () => {
-    expect(controller).toBeDefined()
-  })
+    expect(controller).toBeDefined();
+  });
 
   describe('create', () => {
     it('debe llamar a service.create con el DTO recibido', async () => {
-      const dto: CreateMiembroDto = { rut: '12345678-9', nombre: 'María González', fechaInscripcion: '2024-01-15' }
+      const dto: CreateMiembroDto = {
+        rut: '12345678-9',
+        nombre: 'María González',
+        fechaInscripcion: '2024-01-15',
+      };
 
-      await controller.create(dto)
+      await controller.create(dto);
 
-      expect(service.create).toHaveBeenCalledWith(dto)
-    })
+      expect(service.create).toHaveBeenCalledWith(dto);
+    });
 
     it('debe retornar el miembro creado', async () => {
-      const dto: CreateMiembroDto = { rut: '12345678-9', nombre: 'María González', fechaInscripcion: '2024-01-15' }
+      const dto: CreateMiembroDto = {
+        rut: '12345678-9',
+        nombre: 'María González',
+        fechaInscripcion: '2024-01-15',
+      };
 
-      const result = await controller.create(dto)
+      const result = await controller.create(dto);
 
-      expect(result).toEqual(mockMiembro)
-    })
-  })
+      expect(result).toEqual(mockMiembro);
+    });
+  });
 
   describe('findAll', () => {
     it('debe llamar a service.findAll sin filtro cuando no hay query', async () => {
-      await controller.findAll()
+      await controller.findAll();
 
-      expect(service.findAll).toHaveBeenCalledWith(undefined, undefined)
-    })
+      expect(service.findAll).toHaveBeenCalledWith(undefined, undefined);
+    });
 
     it('debe llamar a service.findAll con el estado filtrado', async () => {
-      await controller.findAll(EstadoSocio.ACTIVO)
+      await controller.findAll(EstadoSocio.ACTIVO);
 
-      expect(service.findAll).toHaveBeenCalledWith(EstadoSocio.ACTIVO, undefined)
-    })
+      expect(service.findAll).toHaveBeenCalledWith(
+        EstadoSocio.ACTIVO,
+        undefined,
+      );
+    });
 
     it('debe retornar resultado paginado con data de miembros', async () => {
-      const result = await controller.findAll()
+      const result = await controller.findAll();
 
-      expect(result.data).toEqual([mockMiembro])
-      expect(result.total).toBe(1)
-    })
-  })
+      expect(result.data).toEqual([mockMiembro]);
+      expect(result.total).toBe(1);
+    });
+  });
 
   describe('findOne', () => {
     it('debe llamar a service.findOne con el id parseado', async () => {
-      await controller.findOne(1)
+      await controller.findOne(1);
 
-      expect(service.findOne).toHaveBeenCalledWith(1)
-    })
+      expect(service.findOne).toHaveBeenCalledWith(1);
+    });
 
     it('debe retornar el miembro encontrado', async () => {
-      const result = await controller.findOne(1)
+      const result = await controller.findOne(1);
 
-      expect(result).toEqual(mockMiembro)
-    })
-  })
+      expect(result).toEqual(mockMiembro);
+    });
+  });
 
   describe('update', () => {
     it('debe llamar a service.update con id y DTO', async () => {
-      const dto: UpdateMiembroDto = { nombre: 'Nuevo Nombre' }
+      const dto: UpdateMiembroDto = { nombre: 'Nuevo Nombre' };
 
-      await controller.update(1, dto)
+      await controller.update(1, dto);
 
-      expect(service.update).toHaveBeenCalledWith(1, dto)
-    })
+      expect(service.update).toHaveBeenCalledWith(1, dto);
+    });
 
     it('debe retornar el miembro actualizado', async () => {
-      const result = await controller.update(1, { nombre: 'X' })
+      const result = await controller.update(1, { nombre: 'X' });
 
-      expect(result).toEqual(mockMiembro)
-    })
-  })
+      expect(result).toEqual(mockMiembro);
+    });
+  });
 
   describe('updateEstado', () => {
     it('debe llamar a service.updateEstado con id y DTO', async () => {
-      const dto: UpdateEstadoDto = { estado: EstadoSocio.SUSPENDIDO }
+      const dto: UpdateEstadoDto = { estado: EstadoSocio.SUSPENDIDO };
 
-      await controller.updateEstado(1, dto)
+      await controller.updateEstado(1, dto);
 
-      expect(service.updateEstado).toHaveBeenCalledWith(1, dto)
-    })
+      expect(service.updateEstado).toHaveBeenCalledWith(1, dto);
+    });
 
     it('debe retornar el miembro con el nuevo estado', async () => {
-      const dto: UpdateEstadoDto = { estado: EstadoSocio.SUSPENDIDO }
+      const dto: UpdateEstadoDto = { estado: EstadoSocio.SUSPENDIDO };
 
-      const result = await controller.updateEstado(1, dto)
+      const result = await controller.updateEstado(1, dto);
 
-      expect(result.estado).toBe(EstadoSocio.SUSPENDIDO)
-    })
-  })
+      expect(result.estado).toBe(EstadoSocio.SUSPENDIDO);
+    });
+  });
 
   describe('vincularUsuario', () => {
     it('debe llamar a service.vincularUsuario con id y userId del DTO', async () => {
-      const dto: VincularUsuarioDto = { userId: 5 }
+      const dto: VincularUsuarioDto = { userId: 5 };
 
-      await controller.vincularUsuario(1, dto)
+      await controller.vincularUsuario(1, dto);
 
-      expect(service.vincularUsuario).toHaveBeenCalledWith(1, 5)
-    })
+      expect(service.vincularUsuario).toHaveBeenCalledWith(1, 5);
+    });
 
     it('debe retornar el miembro con el userId vinculado', async () => {
-      const dto: VincularUsuarioDto = { userId: 5 }
+      const dto: VincularUsuarioDto = { userId: 5 };
 
-      const result = await controller.vincularUsuario(1, dto)
+      const result = await controller.vincularUsuario(1, dto);
 
-      expect(result.userId).toBe(5)
-    })
-  })
-})
+      expect(result.userId).toBe(5);
+    });
+  });
+});

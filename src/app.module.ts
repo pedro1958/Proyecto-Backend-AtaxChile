@@ -1,20 +1,21 @@
-import { Module } from '@nestjs/common'
-import { ConfigModule, ConfigService } from '@nestjs/config'
-import { TypeOrmModule } from '@nestjs/typeorm'
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler'
-import { APP_GUARD } from '@nestjs/core'
-import { AppController } from './app.controller'
-import { AppService } from './app.service'
-import { UsersModule } from './users/users.module'
-import { AuthModule } from './auth/auth.module'
-import { GeoModule } from './geo/geo.module'
-import { AtaxiaTypesModule } from './ataxia-types/ataxia-types.module'
-import { MiembrosModule } from './miembros/miembros.module'
-import { DiagnosticoClinicoModule } from './diagnostico-clinico/diagnostico-clinico.module'
-import { EvaluacionFuncionalModule } from './evaluacion-funcional/evaluacion-funcional.module'
-import { StatsModule } from './stats/stats.module'
-import { JwtAuthGuard } from './auth/guards/jwt-auth.guard'
-import { RolesGuard } from './auth/guards/roles.guard'
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { GeoModule } from './geo/geo.module';
+import { AtaxiaTypesModule } from './ataxia-types/ataxia-types.module';
+import { MiembrosModule } from './miembros/miembros.module';
+import { DiagnosticoClinicoModule } from './diagnostico-clinico/diagnostico-clinico.module';
+import { EvaluacionFuncionalModule } from './evaluacion-funcional/evaluacion-funcional.module';
+import { StatsModule } from './stats/stats.module';
+import { AuditModule } from './audit/audit.module';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { RolesGuard } from './auth/guards/roles.guard';
 
 @Module({
   imports: [
@@ -22,15 +23,15 @@ import { RolesGuard } from './auth/guards/roles.guard'
     ThrottlerModule.forRoot([
       {
         name: 'global',
-        ttl: 60_000,  // 60 segundos
-        limit: 60,    // 60 requests por minuto (uso general)
+        ttl: 60_000, // 60 segundos
+        limit: 60, // 60 requests por minuto (uso general)
       },
     ]),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        const env = config.get<string>('NODE_ENV')
+        const env = config.get<string>('NODE_ENV');
 
         if (env === 'production' || env === 'development') {
           return {
@@ -43,7 +44,7 @@ import { RolesGuard } from './auth/guards/roles.guard'
             autoLoadEntities: true,
             synchronize: env === 'development', // solo en dev, prod usa migraciones
             ssl: env === 'production' ? { rejectUnauthorized: false } : false,
-          }
+          };
         }
 
         // NODE_ENV=test — SQLite en memoria, sin estado entre ejecuciones
@@ -52,7 +53,7 @@ import { RolesGuard } from './auth/guards/roles.guard'
           database: ':memory:',
           autoLoadEntities: true,
           synchronize: true,
-        }
+        };
       },
     }),
     UsersModule,
@@ -63,6 +64,7 @@ import { RolesGuard } from './auth/guards/roles.guard'
     DiagnosticoClinicoModule,
     EvaluacionFuncionalModule,
     StatsModule,
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [

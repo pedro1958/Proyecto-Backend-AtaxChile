@@ -4,21 +4,21 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
-} from 'typeorm'
-import { Region } from './region.entity'
+} from 'typeorm';
+import { Region } from './region.entity';
 
 @Entity('comunas')
 export class Comuna {
   @PrimaryGeneratedColumn()
-  id: number
+  id: number;
 
   @Column()
-  nombre: string
+  nombre: string;
 
   @Column()
-  regionId: number
+  regionId: number;
 
   @ManyToOne(() => Region, (region) => region.comunas)
   @JoinColumn({ name: 'regionId' })
-  region: Region
+  region: Region;
 }
