@@ -495,6 +495,23 @@ SwaggerModule.setup('api/docs', app, document);
 
 ---
 
+# Módulo Audit — Endpoints
+
+| Método | Ruta                      | Acceso     | Descripción                          |
+|--------|---------------------------|------------|--------------------------------------|
+| `GET`  | `/audit-logs`             | SUPERADMIN | Lista paginada con filtros           |
+| `GET`  | `/audit-logs/:id`         | SUPERADMIN | Detalle de un evento específico      |
+
+**Filtros disponibles en `GET /audit-logs`:**
+
+- `?page=1&limit=20` — paginación
+- `?accion=LOGIN` — por tipo de acción
+- `?entidad=miembro` — por entidad afectada
+- `?usuarioId=5` — por usuario
+- `?desde=2024-01-01&hasta=2024-12-31` — rango de fechas
+
+---
+
 # Estado Actual del Proyecto
 
 | Módulo                 | Estado                                                        |
@@ -507,7 +524,7 @@ SwaggerModule.setup('api/docs', app, document);
 | `diagnostico-clinico`  | ✅ Implementado y testeado                                    |
 | `evaluacion-funcional` | ✅ Implementado (append-only) y testeado                      |
 | `stats`                | ✅ Implementado (solo lectura, sin entidad propia) y testeado |
-| `audit`                | 🔲 Pendiente                                                  |
+| `audit`                | ✅ Implementado (append-only) y testeado                      |
 | `exports`              | 🔲 Pendiente                                                  |
 | **Swagger**            | ✅ Configurado en todos los módulos implementados             |
 | **Docker Compose**     | ✅ PostgreSQL 16 local (puerto 5434)                          |
@@ -519,7 +536,7 @@ SwaggerModule.setup('api/docs', app, document);
 
 # Próximos Pasos
 
-1. Implementar módulo `audit` (registro inmutable — prerequisito para otros módulos)
+1. ~~Implementar módulo `audit`~~ ✅ Implementado
 2. Implementar módulo `cuotas` (TarifaAnual + Cuota, diseño documentado)
 3. Implementar módulo `exports` (CSV / XLSX — solo roles autorizados)
 4. Migraciones TypeORM para paso a producción
