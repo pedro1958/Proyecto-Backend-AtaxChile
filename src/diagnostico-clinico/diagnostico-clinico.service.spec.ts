@@ -8,6 +8,7 @@ import {
 } from './entities/diagnostico-clinico.entity';
 import { DiagnosticoClinicoService } from './diagnostico-clinico.service';
 import { Miembro, EstadoSocio } from '../miembros/entities/miembro.entity';
+import { AuditService } from '../audit/audit.service';
 
 const mockMiembro = {
   id: 1,
@@ -65,6 +66,10 @@ describe('DiagnosticoClinicoService', () => {
           useValue: {
             findOneBy: jest.fn(),
           },
+        },
+        {
+          provide: AuditService,
+          useValue: { registrar: jest.fn().mockResolvedValue(undefined) },
         },
       ],
     }).compile();

@@ -96,9 +96,9 @@ describe('MiembrosController', () => {
         fechaInscripcion: '2024-01-15',
       };
 
-      await controller.create(dto);
+      await controller.create(dto, { id: 99 }, '127.0.0.1');
 
-      expect(service.create).toHaveBeenCalledWith(dto);
+      expect(service.create).toHaveBeenCalledWith(dto, 99, '127.0.0.1');
     });
 
     it('debe retornar el miembro creado', async () => {
@@ -108,7 +108,7 @@ describe('MiembrosController', () => {
         fechaInscripcion: '2024-01-15',
       };
 
-      const result = await controller.create(dto);
+      const result = await controller.create(dto, { id: 99 }, '127.0.0.1');
 
       expect(result).toEqual(mockMiembro);
     });
@@ -156,13 +156,13 @@ describe('MiembrosController', () => {
     it('debe llamar a service.update con id y DTO', async () => {
       const dto: UpdateMiembroDto = { nombre: 'Nuevo Nombre' };
 
-      await controller.update(1, dto);
+      await controller.update(1, dto, { id: 99 }, '127.0.0.1');
 
-      expect(service.update).toHaveBeenCalledWith(1, dto);
+      expect(service.update).toHaveBeenCalledWith(1, dto, 99, '127.0.0.1');
     });
 
     it('debe retornar el miembro actualizado', async () => {
-      const result = await controller.update(1, { nombre: 'X' });
+      const result = await controller.update(1, { nombre: 'X' }, { id: 99 }, '127.0.0.1');
 
       expect(result).toEqual(mockMiembro);
     });
@@ -172,15 +172,15 @@ describe('MiembrosController', () => {
     it('debe llamar a service.updateEstado con id y DTO', async () => {
       const dto: UpdateEstadoDto = { estado: EstadoSocio.SUSPENDIDO };
 
-      await controller.updateEstado(1, dto);
+      await controller.updateEstado(1, dto, { id: 99 }, '127.0.0.1');
 
-      expect(service.updateEstado).toHaveBeenCalledWith(1, dto);
+      expect(service.updateEstado).toHaveBeenCalledWith(1, dto, 99, '127.0.0.1');
     });
 
     it('debe retornar el miembro con el nuevo estado', async () => {
       const dto: UpdateEstadoDto = { estado: EstadoSocio.SUSPENDIDO };
 
-      const result = await controller.updateEstado(1, dto);
+      const result = await controller.updateEstado(1, dto, { id: 99 }, '127.0.0.1');
 
       expect(result.estado).toBe(EstadoSocio.SUSPENDIDO);
     });

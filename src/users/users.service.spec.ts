@@ -11,7 +11,8 @@ import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User, Rol } from './entities/user.entity';
 import { UsersService } from './users.service';
-import { MailerService } from '../mailer/mailer.service';
+import { MailerService } from '../mailer/mailer.service'
+import { AuditService } from '../audit/audit.service';
 
 const mockUser: User = {
   id: 1,
@@ -66,6 +67,10 @@ describe('UsersService', () => {
             enviarActivacion: jest.fn().mockResolvedValue(undefined),
             enviarRecuperacion: jest.fn().mockResolvedValue(undefined),
           },
+        },
+        {
+          provide: AuditService,
+          useValue: { registrar: jest.fn().mockResolvedValue(undefined) },
         },
       ],
     }).compile();

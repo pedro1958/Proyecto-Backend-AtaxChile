@@ -54,15 +54,15 @@ describe('AuthController', () => {
     it('debe llamar a authService.login con el DTO recibido', async () => {
       const dto: LoginDto = { email: 'admin@test.cl', password: 'password123' };
 
-      await controller.login(dto);
+      await controller.login(dto, '127.0.0.1');
 
-      expect(authService.login).toHaveBeenCalledWith(dto);
+      expect(authService.login).toHaveBeenCalledWith(dto, '127.0.0.1');
     });
 
     it('debe retornar access_token y refresh_token generados por el service', async () => {
       const dto: LoginDto = { email: 'admin@test.cl', password: 'password123' };
 
-      const result = await controller.login(dto);
+      const result = await controller.login(dto, '127.0.0.1');
 
       expect(result).toEqual({
         access_token: 'fake-access-token',
@@ -89,9 +89,9 @@ describe('AuthController', () => {
 
   describe('logout', () => {
     it('debe llamar a authService.logout con el id del usuario', async () => {
-      await controller.logout({ id: 1 });
+      await controller.logout({ id: 1 }, '127.0.0.1');
 
-      expect(authService.logout).toHaveBeenCalledWith(1);
+      expect(authService.logout).toHaveBeenCalledWith(1, '127.0.0.1');
     });
   });
 

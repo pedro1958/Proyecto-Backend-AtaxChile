@@ -16,6 +16,7 @@ import { MiembrosService } from './miembros.service';
 import { CreateMiembroDto } from './dto/create-miembro.dto';
 import { UpdateMiembroDto } from './dto/update-miembro.dto';
 import { UpdateEstadoDto } from './dto/update-estado.dto';
+import { AuditService } from '../audit/audit.service';
 
 const mockMiembro: Miembro = {
   id: 1,
@@ -80,6 +81,10 @@ describe('MiembrosService', () => {
           useValue: {
             transaction: jest.fn(),
           },
+        },
+        {
+          provide: AuditService,
+          useValue: { registrar: jest.fn().mockResolvedValue(undefined) },
         },
       ],
     }).compile();

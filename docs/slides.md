@@ -98,6 +98,9 @@ src/
 ├── evaluacion-funcional/  Evaluaciones SARA y movilidad (append-only)
 ├── stats/                 Estadísticas agregadas (solo lectura)
 ├── audit/                 Registro de auditoría inmutable
+├── exports/               Exportación de datos (CSV/XLSX/PDF)
+├── mailer/                Envío de emails (Resend)
+├── middlewares/           Middlewares personalizados
 └── common/                TransformInterceptor, PaginatedResult, RutValidator
 ```
 
@@ -512,6 +515,38 @@ SwaggerModule.setup('api/docs', app, document);
 
 ---
 
+<!-- _class: modulo -->
+
+# Módulo Exports
+
+## Exportación de datos — CSV / XLSX / PDF
+
+| Campo          | Tipo       | Descripción                        |
+| -------------- | ---------- | --------------------------------- |
+| `formato`      | enum       | `csv` · `xlsx` · `pdf`           |
+| `estado`       | string     | Filtrar por estado del socio      |
+| `regionId`     | number     | Filtrar por región                |
+| `tipoAtaxiaId` | number     | Filtrar por tipo de ataxia        |
+| `fechaDesde`   | ISO date   | Filtrar por fecha de ingreso      |
+| `fechaHasta`   | ISO date   | Filtrar por fecha de ingreso      |
+
+---
+
+# Módulo Exports — Endpoints
+
+| Método | Ruta                                 | Acceso                      | Descripción                          |
+| ------ | ------------------------------------ | --------------------------- | ------------------------------------ |
+| `GET`  | `/exports/miembros`                  | ADMIN, SECRETARIO, TESORERO | Exportar lista de miembros           |
+| `GET`  | `/exports/miembros/:id/evaluaciones` | ADMIN, SECRETARIO           | Ficha individual con historial (PDF) |
+
+**Formatos disponibles:** `?formato=csv` · `?formato=xlsx` · `?formato=pdf`
+
+**Columnas por rol:**
+- ADMIN / SECRETARIO: todos los campos incluyendo diagnóstico y evaluaciones
+- TESORERO: columnas reducidas (sin datos clínicos sensibles)
+
+---
+
 # Estado Actual del Proyecto
 
 | Módulo                 | Estado                                                        |
@@ -525,7 +560,7 @@ SwaggerModule.setup('api/docs', app, document);
 | `evaluacion-funcional` | ✅ Implementado (append-only) y testeado                      |
 | `stats`                | ✅ Implementado (solo lectura, sin entidad propia) y testeado |
 | `audit`                | ✅ Implementado (append-only) y testeado                      |
-| `exports`              | 🔲 Pendiente                                                  |
+| `exports`              | ✅ Implementado (CSV/XLSX/PDF) y testeado                     |
 | **Swagger**            | ✅ Configurado en todos los módulos implementados             |
 | **Docker Compose**     | ✅ PostgreSQL 16 local (puerto 5434)                          |
 | **Seguridad**          | ✅ helmet + throttler configurados                            |
@@ -536,11 +571,9 @@ SwaggerModule.setup('api/docs', app, document);
 
 # Próximos Pasos
 
-1. ~~Implementar módulo `audit`~~ ✅ Implementado
-2. Implementar módulo `cuotas` (TarifaAnual + Cuota, diseño documentado)
-3. Implementar módulo `exports` (CSV / XLSX — solo roles autorizados)
-4. Migraciones TypeORM para paso a producción
-5. Tests e2e para módulos de diagnóstico, evaluación y stats
+1. Implementar módulo `cuotas` (TarifaAnual + Cuota, diseño documentado)
+2. Migraciones TypeORM para paso a producción
+3. Tests e2e para módulos de diagnóstico, evaluación y stats
 
 ---
 

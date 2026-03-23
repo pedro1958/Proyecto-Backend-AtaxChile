@@ -59,9 +59,9 @@ describe('EvaluacionFuncionalController', () => {
       };
       const currentUser = { id: 10 };
 
-      await controller.create(1, dto, currentUser);
+      await controller.create(1, dto, currentUser, '127.0.0.1');
 
-      expect(service.create).toHaveBeenCalledWith(1, dto, 10);
+      expect(service.create).toHaveBeenCalledWith(1, dto, 10, '127.0.0.1');
     });
 
     it('debe retornar la evaluación creada', async () => {
@@ -70,7 +70,7 @@ describe('EvaluacionFuncionalController', () => {
         nivelMovilidad: NivelMovilidad.AMBULATORIO_CON_APOYO,
       };
 
-      const result = await controller.create(1, dto, { id: 10 });
+      const result = await controller.create(1, dto, { id: 10 }, '127.0.0.1');
 
       expect(result).toEqual(mockEvaluacion);
     });

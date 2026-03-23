@@ -56,13 +56,13 @@ describe('DiagnosticoClinicoController', () => {
         confirmacion: ConfirmacionDiagnostico.GENETICO,
       };
 
-      await controller.create(1, dto);
+      await controller.create(1, dto, { id: 99 }, '127.0.0.1');
 
-      expect(service.create).toHaveBeenCalledWith(1, dto);
+      expect(service.create).toHaveBeenCalledWith(1, dto, 99, '127.0.0.1');
     });
 
     it('debe retornar el diagnóstico creado', async () => {
-      const result = await controller.create(1, {});
+      const result = await controller.create(1, {}, { id: 99 }, '127.0.0.1');
 
       expect(result).toEqual(mockDiagnostico);
     });
@@ -86,13 +86,13 @@ describe('DiagnosticoClinicoController', () => {
     it('debe llamar a service.update con miembroId y DTO', async () => {
       const dto = { subtipo: 'SCA3' };
 
-      await controller.update(1, dto);
+      await controller.update(1, dto, { id: 99 }, '127.0.0.1');
 
-      expect(service.update).toHaveBeenCalledWith(1, dto);
+      expect(service.update).toHaveBeenCalledWith(1, dto, 99, '127.0.0.1');
     });
 
     it('debe retornar el diagnóstico actualizado', async () => {
-      const result = await controller.update(1, { subtipo: 'SCA3' });
+      const result = await controller.update(1, { subtipo: 'SCA3' }, { id: 99 }, '127.0.0.1');
 
       expect(result.subtipo).toBe('SCA3');
     });

@@ -7,6 +7,7 @@ import * as bcrypt from 'bcrypt';
 import { User, Rol } from '../users/entities/user.entity';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { AuditService } from '../audit/audit.service';
 
 const mockUser: User = {
   id: 1,
@@ -59,6 +60,10 @@ describe('AuthService', () => {
           useValue: {
             getOrThrow: jest.fn().mockReturnValue('test-secret'),
           },
+        },
+        {
+          provide: AuditService,
+          useValue: { registrar: jest.fn().mockResolvedValue(undefined) },
         },
       ],
     }).compile();

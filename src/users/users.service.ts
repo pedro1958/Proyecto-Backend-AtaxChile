@@ -15,6 +15,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateRolDto } from './dto/update-rol.dto';
 import { MailerService } from '../mailer/mailer.service';
 import { PaginatedResult } from '../common/types/response.types';
+import { AuditService } from '../audit/audit.service';
+import { AccionAudit } from '../audit/entities/audit-log.entity';
 
 type UserSinPassword = Omit<User, 'password'>;
 type PerfilUsuario = Pick<User, 'nombre' | 'email' | 'rol'>;
@@ -25,6 +27,7 @@ export class UsersService {
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
     private readonly mailerService: MailerService,
+    private readonly auditService: AuditService,
   ) {}
 
   async create(dto: CreateUserDto): Promise<UserSinPassword> {
@@ -156,11 +159,28 @@ export class UsersService {
     await this.usersRepository.save(usuario);
   }
 
-  async updateRol(id: number, dto: UpdateRolDto): Promise<UserSinPassword> {
+  async updateRol(
+    id: number,
+    dto: UpdateRolDto,
+    realizadoPorId?: number,
+    ip?: string,
+  ): Promise<UserSinPassword> {
     const usuario = await this.usersRepository.findOneBy({ id });
     if (!usuario) throw new NotFoundException('Usuario no encontrado');
     usuario.rol = dto.rol;
     const actualizado = await this.usersRepository.save(usuario);
+
+    this.auditService
+      .registrar({
+        accion: AccionAudit.CAMBIAR_ROL,
+        entidad: 'usuario',
+        entidadId: id,
+        usuarioId: realizadoPorId,
+        ip,
+        detalle: { rol: dto.rol },
+      })
+      .catch(() => {})
+
     return this.sinPassword(actualizado);
   }
 

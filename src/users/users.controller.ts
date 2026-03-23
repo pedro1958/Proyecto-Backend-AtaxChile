@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Ip,
   Param,
   ParseIntPipe,
   Patch,
@@ -30,6 +31,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { SelfGuard } from '../auth/guards/self.guard';
 import { Rol } from './entities/user.entity';
 import { PaginationDto } from '../common/dto/pagination.dto';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @ApiTags('Usuarios')
 @ApiBearerAuth()
@@ -135,8 +137,13 @@ export class UsersController {
     status: 403,
     description: 'Sin permisos (requiere superadmin)',
   })
-  updateRol(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateRolDto) {
-    return this.usersService.updateRol(id, dto);
+  updateRol(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateRolDto,
+    @CurrentUser() user: { id: number },
+    @Ip() ip: string,
+  ) {
+    return this.usersService.updateRol(id, dto, user.id, ip);
   }
 
   @Patch(':id/status')
