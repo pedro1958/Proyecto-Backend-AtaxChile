@@ -92,7 +92,12 @@ describe('DiagnosticoClinicoController', () => {
     });
 
     it('debe retornar el diagnóstico actualizado', async () => {
-      const result = await controller.update(1, { subtipo: 'SCA3' }, { id: 99 }, '127.0.0.1');
+      const result = await controller.update(
+        1,
+        { subtipo: 'SCA3' },
+        { id: 99 },
+        '127.0.0.1',
+      );
 
       expect(result.subtipo).toBe('SCA3');
     });

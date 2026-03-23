@@ -179,7 +179,7 @@ export class UsersService {
         ip,
         detalle: { rol: dto.rol },
       })
-      .catch(() => {})
+      .catch(() => {});
 
     return this.sinPassword(actualizado);
   }
@@ -270,7 +270,7 @@ export class UsersService {
   }
 
   private sinPassword(usuario: User): UserSinPassword {
-    const { password, ...resto } = usuario;
+    const { password: _password, ...resto } = usuario;
     return resto;
   }
 }

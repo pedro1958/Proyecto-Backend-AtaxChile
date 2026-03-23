@@ -5,12 +5,7 @@ import { CreateMiembroDto } from './dto/create-miembro.dto';
 import { UpdateMiembroDto } from './dto/update-miembro.dto';
 import { UpdateEstadoDto } from './dto/update-estado.dto';
 import { VincularUsuarioDto } from './dto/vincular-usuario.dto';
-import {
-  Miembro,
-  EstadoSocio,
-  EstadoCivil,
-  TipoRepresentacion,
-} from './entities/miembro.entity';
+import { Miembro, EstadoSocio, EstadoCivil } from './entities/miembro.entity';
 
 const mockMiembro: Miembro = {
   id: 1,
@@ -162,7 +157,12 @@ describe('MiembrosController', () => {
     });
 
     it('debe retornar el miembro actualizado', async () => {
-      const result = await controller.update(1, { nombre: 'X' }, { id: 99 }, '127.0.0.1');
+      const result = await controller.update(
+        1,
+        { nombre: 'X' },
+        { id: 99 },
+        '127.0.0.1',
+      );
 
       expect(result).toEqual(mockMiembro);
     });
@@ -174,13 +174,23 @@ describe('MiembrosController', () => {
 
       await controller.updateEstado(1, dto, { id: 99 }, '127.0.0.1');
 
-      expect(service.updateEstado).toHaveBeenCalledWith(1, dto, 99, '127.0.0.1');
+      expect(service.updateEstado).toHaveBeenCalledWith(
+        1,
+        dto,
+        99,
+        '127.0.0.1',
+      );
     });
 
     it('debe retornar el miembro con el nuevo estado', async () => {
       const dto: UpdateEstadoDto = { estado: EstadoSocio.SUSPENDIDO };
 
-      const result = await controller.updateEstado(1, dto, { id: 99 }, '127.0.0.1');
+      const result = await controller.updateEstado(
+        1,
+        dto,
+        { id: 99 },
+        '127.0.0.1',
+      );
 
       expect(result.estado).toBe(EstadoSocio.SUSPENDIDO);
     });

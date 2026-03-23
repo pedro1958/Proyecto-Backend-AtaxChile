@@ -6,16 +6,21 @@ import {
   ParseIntPipe,
   Res,
   UseGuards,
-} from '@nestjs/common'
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
-import { Response } from 'express'
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
-import { RolesGuard } from '../auth/guards/roles.guard'
-import { Roles } from '../auth/decorators/roles.decorator'
-import { CurrentUser } from '../auth/decorators/current-user.decorator'
-import { Rol } from '../users/entities/user.entity'
-import { ExportsService } from './exports.service'
-import { QueryExportDto } from './dto/query-export.dto'
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { Response } from 'express';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { Rol } from '../users/entities/user.entity';
+import { ExportsService } from './exports.service';
+import { QueryExportDto } from './dto/query-export.dto';
 
 @ApiTags('Exportaciones')
 @ApiBearerAuth()
@@ -33,33 +38,38 @@ export class ExportsController {
     @CurrentUser() user: any,
     @Res() res: Response,
   ) {
-    const archivo = await this.exportsService.generarArchivo(query, user)
+    const archivo = await this.exportsService.generarArchivo(query, user);
 
     res.set({
       'Content-Type': archivo.mimeType,
       'Content-Disposition': `attachment; filename="${archivo.filename}"`,
-    })
+    });
 
-    res.end(archivo.buffer)
+    res.end(archivo.buffer);
   }
 
   @Get('miembros/:id/evaluaciones')
   @Roles(Rol.ADMIN, Rol.SECRETARIO)
-  @ApiOperation({ summary: 'Exportar ficha individual con historial de evaluaciones (PDF)' })
+  @ApiOperation({
+    summary: 'Exportar ficha individual con historial de evaluaciones (PDF)',
+  })
   @ApiResponse({ status: 200, description: 'Archivo PDF' })
-  @ApiResponse({ status: 403, description: 'Sin permisos (tesorero no tiene acceso)' })
+  @ApiResponse({
+    status: 403,
+    description: 'Sin permisos (tesorero no tiene acceso)',
+  })
   async exportFichaIndividual(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: any,
     @Res() res: Response,
   ) {
-    const archivo = await this.exportsService.generarFichaIndividual(id, user)
+    const archivo = await this.exportsService.generarFichaIndividual(id, user);
 
     res.set({
       'Content-Type': archivo.mimeType,
       'Content-Disposition': `attachment; filename="${archivo.filename}"`,
-    })
+    });
 
-    res.end(archivo.buffer)
+    res.end(archivo.buffer);
   }
 }

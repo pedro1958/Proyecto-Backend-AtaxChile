@@ -114,14 +114,29 @@ describe('UsersController', () => {
 
   describe('updateRol', () => {
     it('debe llamar a service.updateRol con id y DTO', async () => {
-      await controller.updateRol(1, { rol: Rol.SECRETARIO }, { id: 99 }, '127.0.0.1');
-      expect(service.updateRol).toHaveBeenCalledWith(1, {
-        rol: Rol.SECRETARIO,
-      }, 99, '127.0.0.1');
+      await controller.updateRol(
+        1,
+        { rol: Rol.SECRETARIO },
+        { id: 99 },
+        '127.0.0.1',
+      );
+      expect(service.updateRol).toHaveBeenCalledWith(
+        1,
+        {
+          rol: Rol.SECRETARIO,
+        },
+        99,
+        '127.0.0.1',
+      );
     });
 
     it('debe retornar el usuario con el rol actualizado', async () => {
-      const result = await controller.updateRol(1, { rol: Rol.SECRETARIO }, { id: 99 }, '127.0.0.1');
+      const result = await controller.updateRol(
+        1,
+        { rol: Rol.SECRETARIO },
+        { id: 99 },
+        '127.0.0.1',
+      );
       expect(result.rol).toBe(Rol.SECRETARIO);
     });
   });
