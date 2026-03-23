@@ -202,20 +202,111 @@ Reglas:
 
 Los roles aplican exclusivamente a **usuarios administrativos** (`users`). Los miembros no poseen rol en el sistema.
 
-| Rol          | Descripción                                                                                                                                          |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `superadmin` | Gestión completa del sistema, incluida la administración de otros usuarios administrativos.                                                          |
-| `admin`      | Administración general: miembros, catálogos, reportes y lectura completa.                                                                            |
-| `secretario` | Gestión de miembros: crear, actualizar y desactivar registros.                                                                                       |
-| `tesorero`   | Acceso a membresías y cuotas.                                                                                                                        |
-| `usuario`    | Rol por defecto asignado automáticamente al registrarse. Sin acceso a funciones administrativas. El `superadmin` puede elevar el rol posteriormente. |
+| Rol          | Descripción |
+|---|---|
+| `SUPERADMIN` | Bypass global — acceso implícito a todos los endpoints vía `RolesGuard`. Gestión completa del sistema incluida administración de otros usuarios. |
+| `ADMIN`      | Administración general: miembros, catálogos, reportes y lectura completa. |
+| `SECRETARIO` | Gestión de miembros: crear, actualizar y registrar evaluaciones. |
+| `TESORERO`   | Lectura de miembros y cuotas. Sin escritura en datos clínicos. |
+| `USUARIO`    | Rol por defecto al registrarse. Sin acceso a funciones administrativas. |
 
-### 8.2 Reglas
+> SUPERADMIN no se repite en la matriz — su bypass opera a nivel de guard.
 
-- Autenticación obligatoria.
-- Autorización validada en cada endpoint.
-- Exportaciones restringidas.
-- Acceso a datos sensibles limitado según rol.
+---
+
+### 8.2 Matriz de Acceso por Endpoint
+
+#### Autenticación
+
+| Endpoint | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas |
+|---|:---:|:---:|:---:|:---:|---|
+| POST /auth/login | ✓ | ✓ | ✓ | ✓ | Público |
+| POST /auth/refresh | ✓ | ✓ | ✓ | ✓ | Público |
+| POST /auth/logout | ✓ | ✓ | ✓ | ✓ | Solo JWT válido |
+| POST /auth/forgot-password | ✓ | ✓ | ✓ | ✓ | Público |
+| POST /auth/reset-password | ✓ | ✓ | ✓ | ✓ | Público |
+| POST /auth/change-password | ✓ | ✓ | ✓ | ✓ | Solo JWT válido |
+
+#### Usuarios
+
+| Endpoint | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas |
+|---|:---:|:---:|:---:|:---:|---|
+| POST /users/register | ✓ | ✓ | ✓ | ✓ | Público |
+| GET /users/confirmar-email/:token | ✓ | ✓ | ✓ | ✓ | Público |
+| GET /users | — | — | — | ✓ | |
+| GET /users/:id | propio | — | — | ✓ | SelfGuard |
+| PUT /users/:id | propio | — | — | ✓ | SelfGuard |
+| PATCH /users/:id/rol | — | — | — | — | Solo SUPERADMIN |
+| PATCH /users/:id/status | — | — | — | — | Solo SUPERADMIN |
+| DELETE /users/:id | — | — | — | — | Solo SUPERADMIN |
+
+#### Miembros
+
+| Endpoint | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas |
+|---|:---:|:---:|:---:|:---:|---|
+| GET /miembros | — | ✓ | ✓ | ✓ | |
+| GET /miembros/:id | — | ✓ | — | ✓ | TESORERO solo ve lista, no detalle |
+| POST /miembros | — | ✓ | — | ✓ | |
+| PATCH /miembros/:id | — | ✓ | — | ✓ | |
+| PATCH /miembros/:id/estado | — | — | — | ✓ | |
+| PATCH /miembros/:id/vincular-usuario | — | — | — | ✓ | |
+
+#### Diagnóstico Clínico
+
+| Endpoint | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas |
+|---|:---:|:---:|:---:|:---:|---|
+| POST /miembros/:id/diagnostico | — | ✓ | — | ✓ | 1:1, falla con 409 si ya existe |
+| GET /miembros/:id/diagnostico | — | ✓ | ✓ | ✓ | |
+| PATCH /miembros/:id/diagnostico | — | ✓ | — | ✓ | |
+
+#### Evaluación Funcional
+
+| Endpoint | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas |
+|---|:---:|:---:|:---:|:---:|---|
+| POST /miembros/:id/evaluaciones | — | ✓ | — | ✓ | Append-only |
+| GET /miembros/:id/evaluaciones | — | ✓ | ✓ | ✓ | |
+| GET /miembros/:id/evaluaciones/ultima | — | ✓ | ✓ | ✓ | |
+
+#### Catálogo de Ataxia
+
+| Endpoint | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas |
+|---|:---:|:---:|:---:|:---:|---|
+| GET /ataxia-types | ✓ | ✓ | ✓ | ✓ | Público |
+| GET /ataxia-types/:id | ✓ | ✓ | ✓ | ✓ | Público |
+| POST /ataxia-types | — | — | — | ✓ | |
+| PATCH /ataxia-types/:id | — | — | — | ✓ | |
+| PATCH /ataxia-types/:id/status | — | — | — | ✓ | Soft-delete |
+
+#### Geografía
+
+| Endpoint | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas |
+|---|:---:|:---:|:---:|:---:|---|
+| GET /geo/regiones | ✓ | ✓ | ✓ | ✓ | Público |
+| GET /geo/regiones/:id | ✓ | ✓ | ✓ | ✓ | Público |
+| GET /geo/regiones/:id/comunas | ✓ | ✓ | ✓ | ✓ | Público |
+| GET /geo/comunas/:id | ✓ | ✓ | ✓ | ✓ | Público |
+| POST/PATCH /geo/* | — | — | — | ✓ | |
+
+#### Estadísticas
+
+| Endpoint | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas |
+|---|:---:|:---:|:---:|:---:|---|
+| GET /stats/resumen | — | ✓ | ✓ | ✓ | |
+| GET /stats/miembros | — | ✓ | — | ✓ | |
+| GET /stats/diagnosticos | — | ✓ | — | ✓ | Excluye representantes |
+| GET /stats/funcional | — | ✓ | — | ✓ | Excluye representantes |
+| GET /stats/geografico | — | ✓ | — | ✓ | |
+| GET /stats/cuotas | — | — | ✓ | ✓ | Pendiente módulo cuotas |
+
+---
+
+### 8.3 Reglas
+
+- Autenticación obligatoria salvo endpoints marcados como Público.
+- SUPERADMIN tiene bypass global en `RolesGuard` — no requiere `@Roles`.
+- `SelfGuard` permite a cualquier usuario autenticado operar sobre su propio recurso.
+- Exportaciones restringidas a roles con acceso explícito.
+- Acceso a datos sensibles (diagnóstico, evaluación) limitado a SECRETARIO y ADMIN.
 
 ---
 

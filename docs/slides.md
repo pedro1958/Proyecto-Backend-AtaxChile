@@ -74,7 +74,7 @@ Plataforma de gestión para la **Agrupación AtaxChile** que permite:
 | Framework             | NestJS 11 + TypeScript                               |
 | ORM                   | TypeORM 0.3                                          |
 | BD Producción         | PostgreSQL (Supabase)                                |
-| BD Desarrollo         | SQLite en archivo (`./db/dev.db`)                    |
+| BD Desarrollo         | PostgreSQL 16 vía Docker Compose (puerto 5434)       |
 | Infraestructura local | Docker Compose — PostgreSQL 16 (puerto 5434)         |
 | Autenticación         | JWT (Passport) — access + refresh tokens             |
 | Seguridad HTTP        | helmet (headers) + @nestjs/throttler (rate limiting) |
@@ -120,13 +120,14 @@ src/
 
 | Rol          | Permisos                                                   |
 | ------------ | ---------------------------------------------------------- |
-| `superadmin` | Gestión completa del sistema y usuarios                    |
-| `admin`      | Miembros, catálogos, reportes                              |
-| `secretario` | Crear, actualizar y desactivar miembros                    |
-| `tesorero`   | Membresías y cuotas                                        |
-| `usuario`    | Rol por defecto al registrarse — sin acceso administrativo |
+| `SUPERADMIN` | Bypass global — gestión completa del sistema y usuarios    |
+| `ADMIN`      | Miembros, catálogos, reportes y lectura completa           |
+| `SECRETARIO` | Crear, actualizar miembros, diagnósticos y evaluaciones    |
+| `TESORERO`   | Lectura de miembros, cuotas y estadísticas de resumen      |
+| `USUARIO`    | Rol por defecto al registrarse — sin acceso administrativo |
 
-> El primer usuario registrado recibe automáticamente el rol `superadmin`.
+> El primer usuario registrado recibe automáticamente el rol `SUPERADMIN`.
+> `SUPERADMIN` tiene bypass global en `RolesGuard` — acceso implícito a todos los endpoints.
 
 ---
 
@@ -398,7 +399,7 @@ export enum TipoRepresentacion {
 
 ---
 
-# API REST — Endpoints por Módulo
+# API REST — Endpoints por Módulo (1/2)
 
 | Módulo              | Base                    | Operaciones                                                                                 |
 | ------------------- | ----------------------- | ------------------------------------------------------------------------------------------- |
@@ -407,13 +408,22 @@ export enum TipoRepresentacion {
 | Geo                 | `/geo`                  | Regiones y comunas (lectura pública, escritura admin)                                       |
 | Tipos de Ataxia     | `/ataxia-types`         | Catálogo con filtro `?grupo=` + soft delete                                                 |
 | Miembros            | `/miembros`             | `POST`, `GET`, `GET /:id`, `PATCH /:id`, `PATCH /:id/estado`, `PATCH /:id/vincular-usuario` |
-| Diagnóstico Clínico | `/diagnostico-clinico`  | `POST`, `GET /:miembroId`, `PATCH /:miembroId`                                              |
-| Eval. Funcional     | `/evaluacion-funcional` | `POST` (append-only), `GET /:miembroId`                                                     |
-| Estadísticas        | `/stats`                | Por tipo, región, rango etario, crecimiento anual                                           |
-| Auditoría           | `/audit-logs`           | Solo lectura, acceso superadmin                                                             |
-| Exportaciones       | `/exports`              | CSV / XLSX — solo roles autorizados                                                         |
+| Diagnóstico Clínico | `/miembros/:id/diagnostico`  | `POST`, `GET`, `PATCH`                                                                 |
+| Eval. Funcional     | `/miembros/:id/evaluaciones` | `POST` (append-only), `GET`, `GET /ultima`                                             |
 
 **Base URL:** `/api/v1`
+
+---
+
+# API REST — Endpoints por Módulo (2/2)
+
+| Módulo        | Base          | Operaciones                                                          |
+| ------------- | ------------- | -------------------------------------------------------------------- |
+| Estadísticas  | `/stats`      | resumen · miembros · diagnósticos · funcional · geográfico · cuotas* |
+| Auditoría     | `/audit-logs` | Solo lectura, acceso SUPERADMIN                                      |
+| Exportaciones | `/exports`    | CSV / XLSX — solo roles autorizados                                  |
+
+*\* pendiente módulo cuotas*
 
 ---
 
