@@ -1124,8 +1124,7 @@ export class TarifaAnual {
   @PrimaryGeneratedColumn('uuid') id: string;
   @Column({ unique: true }) año: number;
   @Column({ type: 'decimal' }) valor_uf: number;           // valor UF de referencia al momento de fijar
-  @Column({ type: 'decimal' }) monto_inscripcion_uf: number;
-  @Column({ type: 'decimal' }) monto_semestre_uf: number;  // aplica a SEMESTRE_1 y SEMESTRE_2
+  @Column({ type: 'decimal' }) monto_cuota_uf: number;     // aplica igual a INSCRIPCION, SEMESTRE_1 y SEMESTRE_2 (actualmente 0.3 UF)
   @Column() definido_por_id: number;
   @ManyToOne(() => User) @JoinColumn({ name: 'definido_por_id' }) definido_por: User;
   @Column() fecha_definicion: Date;
