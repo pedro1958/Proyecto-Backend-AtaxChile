@@ -59,6 +59,7 @@ src/
 ├── stats/                # Estadísticas agregadas
 ├── audit/                # Registro de auditoría inmutable
 ├── exports/              # Exportación de datos (CSV/XLSX/PDF)
+├── finanzas/             # Ingresos y egresos: cuotas, aportes voluntarios, donaciones, egresos (pendiente)
 └── common/               # Filtros, interceptors, pipes compartidos
 ```
 
@@ -104,6 +105,8 @@ Controller → Service → Repository (TypeORM Entity)
 - **Auditoría** (`audit`): Registro inmutable de eventos del sistema. Tabla `audit_logs` con solo `createdAt` (sin `updatedAt`). **CRÍTICO — no implementar UPDATE ni DELETE**. `AuditService` es de uso interno — otros servicios lo inyectan para registrar eventos; ningún controller externo expone un endpoint de creación. Fallo en auditoría no debe interrumpir la operación principal (fire-and-forget). Endpoints de lectura bajo `/audit-logs/` restringidos exclusivamente a SUPERADMIN.
 
 - **Exportaciones** (`exports`): Genera archivos CSV, XLSX y PDF con datos de miembros para roles autorizados. Endpoints bajo `/exports/`. ADMIN, SECRETARIO y TESORERO tienen acceso; TESORERO recibe columnas reducidas (sin datos clínicos sensibles). El módulo consulta `miembros`, `diagnostico-clinico`, `evaluacion-funcional`, `geo` y `ataxia-types` para armar los reportes. Requiere autenticación JWT.
+
+- **Finanzas** (`finanzas`): Gestiona todos los movimientos financieros de la agrupación. Submódulos: (1) **Cuotas** — `TarifaAnual` fija montos en UF; `Cuota` es instancia por miembro/tipo/año con constraint único `(miembro_id, tipo, año)`; `PagoCuota` registra abonos individuales con `miembro_id` (quien paga) y `registrado_por` (quien ingresa al sistema); `Cuota.estado` pasa a `PAGADA` y se registra `fecha_pago_completo` automáticamente cuando la suma de abonos alcanza `monto_asignado_clp`. (2) **Aportes Voluntarios** — ingresos adicionales de miembros registrados. (3) **Donaciones** — de donantes externos; entidad `Donante` pendiente de diseño. (4) **Egresos** — pendiente, se diseña tras completar ingresos. Roles: solo `TESORERO` y `ADMIN`. **No implementar UPDATE ni DELETE** en `Cuota`, `PagoCuota` ni `AporteVoluntario` — el historial financiero es inmutable.
 
 - **Recuperación de contraseña**:
   1. `POST /auth/forgot-password` — recibe `email`; busca el usuario, genera token con `crypto.randomBytes(32)`, almacena el **hash** del token y su expiración (1 hora) en los campos `resetPasswordToken` / `resetPasswordExpires` de la entidad `User`; envía email con enlace al frontend (`/reset-password?token=<token-en-claro>`); responde siempre con mensaje genérico sin confirmar si el email existe (previene enumeración de usuarios).

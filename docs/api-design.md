@@ -192,7 +192,7 @@ Reglas:
 - Distribución por rango etario.
 - Evolución anual de registros.
 - Distribución por nivel de movilidad (última evaluación funcional por miembro).
-- Estado de cuotas: pagadas vs. impagas por año (cuando módulo cuotas esté activo).
+- Estado de cuotas por miembro: pagadas vs. impagas por año (cuando módulo cuotas esté activo).
 
 ---
 
@@ -202,13 +202,13 @@ Reglas:
 
 Los roles aplican exclusivamente a **usuarios administrativos** (`users`). Los miembros no poseen rol en el sistema.
 
-| Rol          | Descripción |
-|---|---|
+| Rol          | Descripción                                                                                                                                      |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `SUPERADMIN` | Bypass global — acceso implícito a todos los endpoints vía `RolesGuard`. Gestión completa del sistema incluida administración de otros usuarios. |
-| `ADMIN`      | Administración general: miembros, catálogos, reportes y lectura completa. |
-| `SECRETARIO` | Gestión de miembros: crear, actualizar y registrar evaluaciones. |
-| `TESORERO`   | Lectura de miembros y cuotas. Sin escritura en datos clínicos. |
-| `USUARIO`    | Rol por defecto al registrarse. Sin acceso a funciones administrativas. |
+| `ADMIN`      | Administración general: miembros, catálogos, reportes y lectura completa.                                                                        |
+| `SECRETARIO` | Gestión de miembros: crear, actualizar y registrar evaluaciones.                                                                                 |
+| `TESORERO`   | Lectura de miembros y cuotas. Sin escritura en datos clínicos.                                                                                   |
+| `USUARIO`    | Rol por defecto al registrarse. Sin acceso a funciones administrativas.                                                                          |
 
 > SUPERADMIN no se repite en la matriz — su bypass opera a nivel de guard.
 
@@ -218,103 +218,121 @@ Los roles aplican exclusivamente a **usuarios administrativos** (`users`). Los m
 
 #### Autenticación
 
-| Endpoint | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas |
-|---|:---:|:---:|:---:|:---:|---|
-| POST /auth/login | ✓ | ✓ | ✓ | ✓ | Público |
-| POST /auth/refresh | ✓ | ✓ | ✓ | ✓ | Público |
-| POST /auth/logout | ✓ | ✓ | ✓ | ✓ | Solo JWT válido |
-| POST /auth/forgot-password | ✓ | ✓ | ✓ | ✓ | Público |
-| POST /auth/reset-password | ✓ | ✓ | ✓ | ✓ | Público |
-| POST /auth/change-password | ✓ | ✓ | ✓ | ✓ | Solo JWT válido |
+| Endpoint                   | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas           |
+| -------------------------- | :-----: | :--------: | :------: | :---: | --------------- |
+| POST /auth/login           |    ✓    |     ✓      |    ✓     |   ✓   | Público         |
+| POST /auth/refresh         |    ✓    |     ✓      |    ✓     |   ✓   | Público         |
+| POST /auth/logout          |    ✓    |     ✓      |    ✓     |   ✓   | Solo JWT válido |
+| POST /auth/forgot-password |    ✓    |     ✓      |    ✓     |   ✓   | Público         |
+| POST /auth/reset-password  |    ✓    |     ✓      |    ✓     |   ✓   | Público         |
+| POST /auth/change-password |    ✓    |     ✓      |    ✓     |   ✓   | Solo JWT válido |
 
 #### Usuarios
 
-| Endpoint | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas |
-|---|:---:|:---:|:---:|:---:|---|
-| POST /users/register | ✓ | ✓ | ✓ | ✓ | Público |
-| GET /users/confirmar-email/:token | ✓ | ✓ | ✓ | ✓ | Público |
-| GET /users | — | — | — | ✓ | |
-| GET /users/:id | propio | — | — | ✓ | SelfGuard |
-| PUT /users/:id | propio | — | — | ✓ | SelfGuard |
-| PATCH /users/:id/rol | — | — | — | — | Solo SUPERADMIN |
-| PATCH /users/:id/status | — | — | — | — | Solo SUPERADMIN |
-| DELETE /users/:id | — | — | — | — | Solo SUPERADMIN |
+| Endpoint                          | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas           |
+| --------------------------------- | :-----: | :--------: | :------: | :---: | --------------- |
+| POST /users/register              |    ✓    |     ✓      |    ✓     |   ✓   | Público         |
+| GET /users/confirmar-email/:token |    ✓    |     ✓      |    ✓     |   ✓   | Público         |
+| GET /users                        |    —    |     —      |    —     |   ✓   |                 |
+| GET /users/:id                    | propio  |     —      |    —     |   ✓   | SelfGuard       |
+| PUT /users/:id                    | propio  |     —      |    —     |   ✓   | SelfGuard       |
+| PATCH /users/:id/rol              |    —    |     —      |    —     |   —   | Solo SUPERADMIN |
+| PATCH /users/:id/status           |    —    |     —      |    —     |   —   | Solo SUPERADMIN |
+| DELETE /users/:id                 |    —    |     —      |    —     |   —   | Solo SUPERADMIN |
 
 #### Miembros
 
-| Endpoint | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas |
-|---|:---:|:---:|:---:|:---:|---|
-| GET /miembros | — | ✓ | ✓ | ✓ | |
-| GET /miembros/:id | — | ✓ | — | ✓ | TESORERO solo ve lista, no detalle |
-| POST /miembros | — | ✓ | — | ✓ | |
-| PATCH /miembros/:id | — | ✓ | — | ✓ | |
-| PATCH /miembros/:id/estado | — | — | — | ✓ | |
-| PATCH /miembros/:id/vincular-usuario | — | — | — | ✓ | |
+| Endpoint                             | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas                              |
+| ------------------------------------ | :-----: | :--------: | :------: | :---: | ---------------------------------- |
+| GET /miembros                        |    —    |     ✓      |    ✓     |   ✓   |                                    |
+| GET /miembros/:id                    |    —    |     ✓      |    —     |   ✓   | TESORERO solo ve lista, no detalle |
+| POST /miembros                       |    —    |     ✓      |    —     |   ✓   |                                    |
+| PATCH /miembros/:id                  |    —    |     ✓      |    —     |   ✓   |                                    |
+| PATCH /miembros/:id/estado           |    —    |     —      |    —     |   ✓   |                                    |
+| PATCH /miembros/:id/vincular-usuario |    —    |     —      |    —     |   ✓   |                                    |
 
 #### Diagnóstico Clínico
 
-| Endpoint | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas |
-|---|:---:|:---:|:---:|:---:|---|
-| POST /miembros/:id/diagnostico | — | ✓ | — | ✓ | 1:1, falla con 409 si ya existe |
-| GET /miembros/:id/diagnostico | — | ✓ | ✓ | ✓ | |
-| PATCH /miembros/:id/diagnostico | — | ✓ | — | ✓ | |
+| Endpoint                        | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas                           |
+| ------------------------------- | :-----: | :--------: | :------: | :---: | ------------------------------- |
+| POST /miembros/:id/diagnostico  |    —    |     ✓      |    —     |   ✓   | 1:1, falla con 409 si ya existe |
+| GET /miembros/:id/diagnostico   |    —    |     ✓      |    ✓     |   ✓   |                                 |
+| PATCH /miembros/:id/diagnostico |    —    |     ✓      |    —     |   ✓   |                                 |
 
 #### Evaluación Funcional
 
-| Endpoint | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas |
-|---|:---:|:---:|:---:|:---:|---|
-| POST /miembros/:id/evaluaciones | — | ✓ | — | ✓ | Append-only |
-| GET /miembros/:id/evaluaciones | — | ✓ | ✓ | ✓ | |
-| GET /miembros/:id/evaluaciones/ultima | — | ✓ | ✓ | ✓ | |
+| Endpoint                              | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas       |
+| ------------------------------------- | :-----: | :--------: | :------: | :---: | ----------- |
+| POST /miembros/:id/evaluaciones       |    —    |     ✓      |    —     |   ✓   | Append-only |
+| GET /miembros/:id/evaluaciones        |    —    |     ✓      |    ✓     |   ✓   |             |
+| GET /miembros/:id/evaluaciones/ultima |    —    |     ✓      |    ✓     |   ✓   |             |
 
 #### Catálogo de Ataxia
 
-| Endpoint | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas |
-|---|:---:|:---:|:---:|:---:|---|
-| GET /ataxia-types | ✓ | ✓ | ✓ | ✓ | Público |
-| GET /ataxia-types/:id | ✓ | ✓ | ✓ | ✓ | Público |
-| POST /ataxia-types | — | — | — | ✓ | |
-| PATCH /ataxia-types/:id | — | — | — | ✓ | |
-| PATCH /ataxia-types/:id/status | — | — | — | ✓ | Soft-delete |
+| Endpoint                       | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas       |
+| ------------------------------ | :-----: | :--------: | :------: | :---: | ----------- |
+| GET /ataxia-types              |    ✓    |     ✓      |    ✓     |   ✓   | Público     |
+| GET /ataxia-types/:id          |    ✓    |     ✓      |    ✓     |   ✓   | Público     |
+| POST /ataxia-types             |    —    |     —      |    —     |   ✓   |             |
+| PATCH /ataxia-types/:id        |    —    |     —      |    —     |   ✓   |             |
+| PATCH /ataxia-types/:id/status |    —    |     —      |    —     |   ✓   | Soft-delete |
 
 #### Geografía
 
-| Endpoint | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas |
-|---|:---:|:---:|:---:|:---:|---|
-| GET /geo/regiones | ✓ | ✓ | ✓ | ✓ | Público |
-| GET /geo/regiones/:id | ✓ | ✓ | ✓ | ✓ | Público |
-| GET /geo/regiones/:id/comunas | ✓ | ✓ | ✓ | ✓ | Público |
-| GET /geo/comunas/:id | ✓ | ✓ | ✓ | ✓ | Público |
-| POST/PATCH /geo/* | — | — | — | ✓ | |
+| Endpoint                      | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas   |
+| ----------------------------- | :-----: | :--------: | :------: | :---: | ------- |
+| GET /geo/regiones             |    ✓    |     ✓      |    ✓     |   ✓   | Público |
+| GET /geo/regiones/:id         |    ✓    |     ✓      |    ✓     |   ✓   | Público |
+| GET /geo/regiones/:id/comunas |    ✓    |     ✓      |    ✓     |   ✓   | Público |
+| GET /geo/comunas/:id          |    ✓    |     ✓      |    ✓     |   ✓   | Público |
+| POST/PATCH /geo/\*            |    —    |     —      |    —     |   ✓   |         |
 
 #### Estadísticas
 
-| Endpoint | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas |
-|---|:---:|:---:|:---:|:---:|---|
-| GET /stats/resumen | — | ✓ | ✓ | ✓ | |
-| GET /stats/miembros | — | ✓ | — | ✓ | |
-| GET /stats/diagnosticos | — | ✓ | — | ✓ | Excluye representantes |
-| GET /stats/funcional | — | ✓ | — | ✓ | Excluye representantes |
-| GET /stats/geografico | — | ✓ | — | ✓ | |
-| GET /stats/cuotas | — | — | ✓ | ✓ | Pendiente módulo cuotas |
+| Endpoint                | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas                   |
+| ----------------------- | :-----: | :--------: | :------: | :---: | ----------------------- |
+| GET /stats/resumen      |    —    |     ✓      |    ✓     |   ✓   |                         |
+| GET /stats/miembros     |    —    |     ✓      |    —     |   ✓   |                         |
+| GET /stats/diagnosticos |    —    |     ✓      |    —     |   ✓   | Excluye representantes  |
+| GET /stats/funcional    |    —    |     ✓      |    —     |   ✓   | Excluye representantes  |
+| GET /stats/geografico   |    —    |     ✓      |    —     |   ✓   |                         |
+| GET /stats/cuotas       |    —    |     —      |    ✓     |   ✓   | Pendiente módulo cuotas |
 
 ---
 
 #### Exportaciones
 
-| Endpoint | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas |
-|---|:---:|:---:|:---:|:---:|---|
-| GET /exports/miembros | — | ✓ | ✓ | ✓ | CSV/XLSX con columnas según rol |
-| GET /exports/miembros/:id/evaluaciones | — | ✓ | — | ✓ | PDF con historial de evaluaciones |
+| Endpoint                               | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas                             |
+| -------------------------------------- | :-----: | :--------: | :------: | :---: | --------------------------------- |
+| GET /exports/miembros                  |    —    |     ✓      |    ✓     |   ✓   | CSV/XLSX con columnas según rol   |
+| GET /exports/miembros/:id/evaluaciones |    —    |     ✓      |    —     |   ✓   | PDF con historial de evaluaciones |
+
+---
+
+#### Finanzas
+
+| Endpoint                                     | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas                          |
+| -------------------------------------------- | :-----: | :--------: | :------: | :---: | ------------------------------ |
+| POST /finanzas/tarifas-anuales               |    —    |     —      |    ✓     |   ✓   |                                |
+| GET  /finanzas/tarifas-anuales               |    —    |     —      |    ✓     |   ✓   |                                |
+| GET  /finanzas/cuotas                        |    —    |     —      |    ✓     |   ✓   | Reporte de morosos             |
+| GET  /miembros/:id/cuotas                    |    —    |     —      |    ✓     |   ✓   |                                |
+| POST /miembros/:id/cuotas/:cuotaId/pagos     |    —    |     —      |    ✓     |   ✓   | Registrar abono                |
+| GET  /miembros/:id/cuotas/:cuotaId/pagos     |    —    |     —      |    ✓     |   ✓   | Historial de abonos            |
+| POST /finanzas/aportes                       |    —    |     —      |    ✓     |   ✓   |                                |
+| GET  /finanzas/aportes                       |    —    |     —      |    ✓     |   ✓   |                                |
+| GET  /miembros/:id/aportes                   |    —    |     —      |    ✓     |   ✓   |                                |
+| POST /finanzas/donaciones                    |    —    |     —      |    ✓     |   ✓   | Pendiente diseño de Donante    |
+| GET  /finanzas/donaciones                    |    —    |     —      |    ✓     |   ✓   | Pendiente diseño de Donante    |
 
 ---
 
 #### Auditoría
 
-| Endpoint | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas |
-|---|:---:|:---:|:---:|:---:|---|
-| GET /audit-logs | — | — | — | — | Solo SUPERADMIN |
-| GET /audit-logs/:id | — | — | — | — | Solo SUPERADMIN |
+| Endpoint            | USUARIO | SECRETARIO | TESORERO | ADMIN | Notas           |
+| ------------------- | :-----: | :--------: | :------: | :---: | --------------- |
+| GET /audit-logs     |    —    |     —      |    —     |   —   | Solo SUPERADMIN |
+| GET /audit-logs/:id |    —    |     —      |    —     |   —   | Solo SUPERADMIN |
 
 ### 8.3 Reglas
 
@@ -356,36 +374,36 @@ Reglas:
 
 ### 10.1 Entidad `AuditLog`
 
-| Campo       | Tipo              | Descripción |
-|-------------|-------------------|-------------|
-| `id`        | uuid              | PK |
-| `usuarioId` | FK → User \| null | Quién ejecutó la acción (null si no hay sesión) |
-| `accion`    | enum              | Tipo de evento (ver §10.2) |
+| Campo       | Tipo              | Descripción                                             |
+| ----------- | ----------------- | ------------------------------------------------------- |
+| `id`        | uuid              | PK                                                      |
+| `usuarioId` | FK → User \| null | Quién ejecutó la acción (null si no hay sesión)         |
+| `accion`    | enum              | Tipo de evento (ver §10.2)                              |
 | `entidad`   | varchar           | Nombre de la tabla afectada (`miembros`, `users`, etc.) |
-| `entidadId` | varchar \| null   | ID del registro afectado |
-| `detalle`   | json \| null      | Datos adicionales del evento (campos cambiados, etc.) |
-| `ip`        | varchar \| null   | IP del cliente |
-| `createdAt` | timestamp         | Fecha del evento |
+| `entidadId` | varchar \| null   | ID del registro afectado                                |
+| `detalle`   | json \| null      | Datos adicionales del evento (campos cambiados, etc.)   |
+| `ip`        | varchar \| null   | IP del cliente                                          |
+| `createdAt` | timestamp         | Fecha del evento                                        |
 
 > Sin `updatedAt`. Registro inmutable — sin UPDATE ni DELETE.
 
 ### 10.2 Eventos auditables
 
-| Acción (`accion`)       | Cuándo se registra |
-|-------------------------|--------------------|
-| `LOGIN`                 | Login exitoso |
-| `LOGOUT`                | Cierre de sesión |
-| `LOGIN_FALLIDO`         | Intento fallido de login |
-| `CREAR_MIEMBRO`         | POST /miembros |
-| `MODIFICAR_MIEMBRO`     | PATCH /miembros/:id |
-| `CAMBIAR_ESTADO_MIEMBRO`| PATCH /miembros/:id/estado |
-| `CREAR_DIAGNOSTICO`     | POST /miembros/:id/diagnostico |
-| `MODIFICAR_DIAGNOSTICO` | PATCH /miembros/:id/diagnostico |
-| `CREAR_EVALUACION`      | POST /miembros/:id/evaluaciones |
-| `MODIFICAR_CATALOGO`    | POST/PATCH /ataxia-types |
-| `GENERAR_REPORTE`       | GET /stats/* |
-| `EXPORTAR_DATOS`        | GET /exports/* |
-| `CAMBIAR_ROL`           | PATCH /users/:id/rol |
+| Acción (`accion`)        | Cuándo se registra              |
+| ------------------------ | ------------------------------- |
+| `LOGIN`                  | Login exitoso                   |
+| `LOGOUT`                 | Cierre de sesión                |
+| `LOGIN_FALLIDO`          | Intento fallido de login        |
+| `CREAR_MIEMBRO`          | POST /miembros                  |
+| `MODIFICAR_MIEMBRO`      | PATCH /miembros/:id             |
+| `CAMBIAR_ESTADO_MIEMBRO` | PATCH /miembros/:id/estado      |
+| `CREAR_DIAGNOSTICO`      | POST /miembros/:id/diagnostico  |
+| `MODIFICAR_DIAGNOSTICO`  | PATCH /miembros/:id/diagnostico |
+| `CREAR_EVALUACION`       | POST /miembros/:id/evaluaciones |
+| `MODIFICAR_CATALOGO`     | POST/PATCH /ataxia-types        |
+| `GENERAR_REPORTE`        | GET /stats/\*                   |
+| `EXPORTAR_DATOS`         | GET /exports/\*                 |
+| `CAMBIAR_ROL`            | PATCH /users/:id/rol            |
 
 ### 10.3 Reglas
 
@@ -605,14 +623,14 @@ No se implementa `DELETE` — si un tipo ya tiene miembros asociados, eliminarlo
 
 > **Nota:** SUPERADMIN tiene acceso implícito a todos los endpoints mediante bypass global en `RolesGuard`. No se lista en cada fila.
 
-| Endpoint                  | Roles autorizados                   | Descripción |
-|---------------------------|-------------------------------------|-------------|
-| `GET /stats/resumen`      | ADMIN, SECRETARIO, TESORERO         | Panel principal: totales y variaciones recientes |
-| `GET /stats/miembros`     | ADMIN, SECRETARIO                   | Desglose por estado (activo, fallecido, etc.) |
-| `GET /stats/diagnosticos` | ADMIN, SECRETARIO                   | Distribución por tipo de ataxia y confirmación diagnóstica. Excluye representantes. |
-| `GET /stats/funcional`    | ADMIN, SECRETARIO                   | Distribución por nivel de movilidad (última evaluación por miembro) |
-| `GET /stats/geografico`   | ADMIN, SECRETARIO                   | Distribución por región |
-| `GET /stats/cuotas`       | ADMIN, TESORERO                     | Morosos vs. al día, filtrable por `?año=` |
+| Endpoint                  | Roles autorizados           | Descripción                                                                         |
+| ------------------------- | --------------------------- | ----------------------------------------------------------------------------------- |
+| `GET /stats/resumen`      | ADMIN, SECRETARIO, TESORERO | Panel principal: totales y variaciones recientes                                    |
+| `GET /stats/miembros`     | ADMIN, SECRETARIO           | Desglose por estado (activo, fallecido, etc.)                                       |
+| `GET /stats/diagnosticos` | ADMIN, SECRETARIO           | Distribución por tipo de ataxia y confirmación diagnóstica. Excluye representantes. |
+| `GET /stats/funcional`    | ADMIN, SECRETARIO           | Distribución por nivel de movilidad (última evaluación por miembro)                 |
+| `GET /stats/geografico`   | ADMIN, SECRETARIO           | Distribución por región                                                             |
+| `GET /stats/cuotas`       | ADMIN, TESORERO             | Morosos vs. al día, filtrable por `?año=`                                           |
 
 Reglas:
 
@@ -629,44 +647,44 @@ Genera archivos con datos de miembros para roles autorizados. Todo acceso se reg
 
 ### Formatos soportados
 
-| Formato | Extensión | Librería |
-|---------|----------|----------|
-| CSV | `.csv` | Native (fs) |
-| XLSX | `.xlsx` | `exceljs` |
-| PDF | `.pdf` | `pdfkit` |
+| Formato | Extensión | Librería    |
+| ------- | --------- | ----------- |
+| CSV     | `.csv`    | Native (fs) |
+| XLSX    | `.xlsx`   | `exceljs`   |
+| PDF     | `.pdf`    | `pdfkit`    |
 
 ### Endpoints
 
-| Método | Ruta | Roles | Descripción |
-|--------|------|-------|-------------|
-| `GET` | `/exports/miembros` | ADMIN, SECRETARIO, TESORERO | Exporta lista de miembros |
-| `GET` | `/exports/miembros/:id/evaluaciones` | ADMIN, SECRETARIO | Ficha individual con historial de evaluaciones |
+| Método | Ruta                                 | Roles                       | Descripción                                    |
+| ------ | ------------------------------------ | --------------------------- | ---------------------------------------------- |
+| `GET`  | `/exports/miembros`                  | ADMIN, SECRETARIO, TESORERO | Exporta lista de miembros                      |
+| `GET`  | `/exports/miembros/:id/evaluaciones` | ADMIN, SECRETARIO           | Ficha individual con historial de evaluaciones |
 
 ### Query params comunes
 
-| Parámetro | Tipo | Descripción |
-|-----------|------|-------------|
-| `formato` | `csv` \| `xlsx` \| `pdf` | Formato del archivo (default: `csv`) |
-| `estado` | `activo` \| `renunciado` \| `suspendido` \| `fallecido` | Filtrar por estado del socio |
-| `regionId` | number | Filtrar por región |
-| `tipoAtaxiaId` | number | Filtrar por tipo de ataxia |
-| `fechaDesde` | ISO date | Filtrar por fecha de ingreso (inicio) |
-| `fechaHasta` | ISO date | Filtrar por fecha de ingreso (fin) |
+| Parámetro      | Tipo                                                    | Descripción                           |
+| -------------- | ------------------------------------------------------- | ------------------------------------- |
+| `formato`      | `csv` \| `xlsx` \| `pdf`                                | Formato del archivo (default: `csv`)  |
+| `estado`       | `activo` \| `renunciado` \| `suspendido` \| `fallecido` | Filtrar por estado del socio          |
+| `regionId`     | number                                                  | Filtrar por región                    |
+| `tipoAtaxiaId` | number                                                  | Filtrar por tipo de ataxia            |
+| `fechaDesde`   | ISO date                                                | Filtrar por fecha de ingreso (inicio) |
+| `fechaHasta`   | ISO date                                                | Filtrar por fecha de ingreso (fin)    |
 
 ### Columnas por rol
 
-| Columna | ADMIN / SECRETARIO | TESORERO |
-|---------|:-----------------:|:--------:|
-| RUT | ✅ | ✅ |
-| Nombre completo | ✅ | ✅ |
-| Email | ✅ | ✅ |
-| Celular | ✅ | ❌ |
-| Región / Comuna | ✅ | ✅ |
-| Tipo de ataxia | ✅ | ❌ |
-| Fecha de ingreso | ✅ | ✅ |
-| Estado socio | ✅ | ✅ |
-| Diagnóstico clínico | ✅ | ❌ |
-| Evaluaciones funcionales | ✅ | ❌ |
+| Columna                  | ADMIN / SECRETARIO | TESORERO |
+| ------------------------ | :----------------: | :------: |
+| RUT                      |         ✅         |    ✅    |
+| Nombre completo          |         ✅         |    ✅    |
+| Email                    |         ✅         |    ✅    |
+| Celular                  |         ✅         |    ❌    |
+| Región / Comuna          |         ✅         |    ✅    |
+| Tipo de ataxia           |         ✅         |    ❌    |
+| Fecha de ingreso         |         ✅         |    ✅    |
+| Estado socio             |         ✅         |    ✅    |
+| Diagnóstico clínico      |         ✅         |    ❌    |
+| Evaluaciones funcionales |         ✅         |    ❌    |
 
 ### PDF — Informe general
 
@@ -694,16 +712,71 @@ Genera un documento PDF por miembro (`/exports/miembros/:id/evaluaciones`):
 
 ---
 
+## 19.5 Endpoints de Finanzas
+
+> Roles: `TESORERO` (responsable principal) y `ADMIN` (reemplazo). `SUPERADMIN` por bypass global. Ningún otro rol tiene acceso de escritura.
+
+### Tarifas Anuales
+
+| Método | Ruta                          | Roles           | Descripción                                                           |
+| ------ | ----------------------------- | --------------- | --------------------------------------------------------------------- |
+| `POST` | `/finanzas/tarifas-anuales`   | TESORERO, ADMIN | Fijar tarifa del año — genera cuotas para todos los miembros activos  |
+| `GET`  | `/finanzas/tarifas-anuales`   | TESORERO, ADMIN | Historial de tarifas                                                  |
+
+### Cuotas
+
+| Método | Ruta                                     | Roles           | Descripción                                    |
+| ------ | ---------------------------------------- | --------------- | ---------------------------------------------- |
+| `GET`  | `/finanzas/cuotas`                       | TESORERO, ADMIN | Reporte filtrable de cuotas                    |
+| `GET`  | `/miembros/:id/cuotas`                   | TESORERO, ADMIN | Cuotas de un miembro                           |
+| `POST` | `/miembros/:id/cuotas/:cuotaId/pagos`    | TESORERO, ADMIN | Registrar abono (parcial o total)              |
+| `GET`  | `/miembros/:id/cuotas/:cuotaId/pagos`    | TESORERO, ADMIN | Historial de abonos de una cuota               |
+
+Query params `GET /finanzas/cuotas`: `?año=2026`, `?estado=IMPAGA`, `?tipo=SEMESTRE_1`, `?miembroId=uuid`
+
+Reglas de negocio:
+- Al crear `TarifaAnual` para el año N → el sistema genera `SEMESTRE_1` y `SEMESTRE_2` para todos los miembros activos.
+- Al incorporar un nuevo miembro → se generan `INSCRIPCION` + `SEMESTRE_1` + `SEMESTRE_2` del año en curso.
+- `Cuota.estado` pasa a `PAGADA` y se registra `fecha_pago_completo` cuando `SUM(PagoCuota.monto_clp) >= monto_asignado_clp`.
+- No existe exoneración en esta versión — decisión reservada a la directiva.
+- **No implementar UPDATE ni DELETE** en `Cuota` ni `PagoCuota` — el historial financiero es inmutable.
+
+### Aportes Voluntarios
+
+| Método | Ruta                      | Roles           | Descripción                               |
+| ------ | ------------------------- | --------------- | ----------------------------------------- |
+| `POST` | `/finanzas/aportes`       | TESORERO, ADMIN | Registrar aporte voluntario de un miembro |
+| `GET`  | `/finanzas/aportes`       | TESORERO, ADMIN | Listar aportes con filtros                |
+| `GET`  | `/miembros/:id/aportes`   | TESORERO, ADMIN | Aportes de un miembro específico          |
+
+Regla: solo miembros registrados pueden realizar aportes voluntarios.
+
+### Donaciones
+
+> Pendiente diseño de entidad `Donante`.
+
+| Método | Ruta                      | Roles           | Descripción         |
+| ------ | ------------------------- | --------------- | ------------------- |
+| `POST` | `/finanzas/donaciones`    | TESORERO, ADMIN | Registrar donación  |
+| `GET`  | `/finanzas/donaciones`    | TESORERO, ADMIN | Listar donaciones   |
+
+### Egresos
+
+> Pendiente — se diseñará tras completar los submódulos de ingresos.
+
+---
+
 ## 20. Endpoints de Auditoría
 
 > **Nota:** SUPERADMIN tiene acceso implícito a todos los endpoints mediante bypass global en `RolesGuard`. No se lista en cada fila.
 
-| Endpoint              | Roles autorizados | Descripción |
-|-----------------------|-------------------|-------------|
+| Endpoint              | Roles autorizados | Descripción                                           |
+| --------------------- | ----------------- | ----------------------------------------------------- |
 | `GET /audit-logs`     | —                 | Solo SUPERADMIN (bypass) — lista paginada con filtros |
-| `GET /audit-logs/:id` | —                 | Solo SUPERADMIN — detalle de un evento |
+| `GET /audit-logs/:id` | —                 | Solo SUPERADMIN — detalle de un evento                |
 
 Filtros disponibles en `GET /audit-logs`:
+
 - `?accion=LOGIN` — filtrar por tipo de evento
 - `?entidad=miembros` — filtrar por tabla afectada
 - `?usuarioId=1` — filtrar por usuario
@@ -1037,12 +1110,114 @@ export class EvaluacionFuncional {
 }
 ```
 
+**`TarifaAnual`** — montos fijados por la directiva cada año en base a la UF:
+
+```typescript
+export enum TipoCuota {
+  INSCRIPCION = 'INSCRIPCION',
+  SEMESTRE_1 = 'SEMESTRE_1',
+  SEMESTRE_2 = 'SEMESTRE_2',
+}
+
+@Entity('tarifas_anuales')
+export class TarifaAnual {
+  @PrimaryGeneratedColumn('uuid') id: string;
+  @Column({ unique: true }) año: number;
+  @Column({ type: 'decimal' }) valor_uf: number;           // valor UF de referencia al momento de fijar
+  @Column({ type: 'decimal' }) monto_inscripcion_uf: number;
+  @Column({ type: 'decimal' }) monto_semestre_uf: number;  // aplica a SEMESTRE_1 y SEMESTRE_2
+  @Column() definido_por_id: number;
+  @ManyToOne(() => User) @JoinColumn({ name: 'definido_por_id' }) definido_por: User;
+  @Column() fecha_definicion: Date;
+  @CreateDateColumn() createdAt: Date;
+}
+```
+
+**`Cuota`** — instancia de cuota por miembro, tipo y año:
+
+```typescript
+export enum EstadoCuota {
+  IMPAGA = 'IMPAGA',
+  PAGADA = 'PAGADA',
+}
+
+@Entity('cuotas')
+@Unique(['miembro_id', 'tipo', 'año'])
+export class Cuota {
+  @PrimaryGeneratedColumn('uuid') id: string;
+  @Column() miembro_id: string;
+  @ManyToOne(() => Member) @JoinColumn({ name: 'miembro_id' }) miembro: Member;
+  @Column({ type: 'varchar' }) tipo: TipoCuota;
+  @Column() año: number;
+  @Column({ type: 'decimal' }) monto_asignado_uf: number;
+  @Column({ type: 'decimal' }) monto_asignado_clp: number;  // UF × valor_uf al día de asignación
+  @Column({ type: 'varchar', default: EstadoCuota.IMPAGA }) estado: EstadoCuota;
+  @Column({ nullable: true }) fecha_pago_completo: Date;    // se registra automáticamente al completar
+  @CreateDateColumn() createdAt: Date;
+}
+```
+
+**`PagoCuota`** — abono individual a una cuota (historial inmutable):
+
+```typescript
+@Entity('pagos_cuota')
+export class PagoCuota {
+  @PrimaryGeneratedColumn('uuid') id: string;
+  @Column() cuota_id: string;
+  @ManyToOne(() => Cuota) @JoinColumn({ name: 'cuota_id' }) cuota: Cuota;
+  @Column() miembro_id: string;
+  @ManyToOne(() => Member) @JoinColumn({ name: 'miembro_id' }) miembro: Member;  // quien realiza el pago
+  @Column({ type: 'decimal' }) monto_clp: number;
+  @Column() fecha_pago: Date;
+  @Column() registrado_por_id: number;
+  @ManyToOne(() => User) @JoinColumn({ name: 'registrado_por_id' }) registrado_por: User;
+  @CreateDateColumn() createdAt: Date;
+  // Sin @UpdateDateColumn — inmutable
+}
+```
+
+**`AporteVoluntario`** — ingresos adicionales de miembros registrados:
+
+```typescript
+@Entity('aportes_voluntarios')
+export class AporteVoluntario {
+  @PrimaryGeneratedColumn('uuid') id: string;
+  @Column() miembro_id: string;
+  @ManyToOne(() => Member) @JoinColumn({ name: 'miembro_id' }) miembro: Member;
+  @Column({ type: 'decimal' }) monto_clp: number;
+  @Column() fecha: Date;
+  @Column() concepto: string;
+  @Column() registrado_por_id: number;
+  @ManyToOne(() => User) @JoinColumn({ name: 'registrado_por_id' }) registrado_por: User;
+  @CreateDateColumn() createdAt: Date;
+  // Sin @UpdateDateColumn — inmutable
+}
+```
+
+**`Donacion`** — donaciones de donantes externos (entidad `Donante` pendiente de diseño):
+
+```typescript
+@Entity('donaciones')
+export class Donacion {
+  @PrimaryGeneratedColumn('uuid') id: string;
+  @Column() donante_id: string;             // FK → Donante (pendiente diseño)
+  @Column({ type: 'decimal' }) monto_clp: number;
+  @Column() fecha: Date;
+  @Column() concepto: string;
+  @Column() registrado_por_id: number;
+  @ManyToOne(() => User) @JoinColumn({ name: 'registrado_por_id' }) registrado_por: User;
+  @CreateDateColumn() createdAt: Date;
+  // Sin @UpdateDateColumn — inmutable
+}
+```
+
 **Reglas:**
 
 - Las tablas `users` y `members` son independientes. No usar herencia ni tabla única.
 - `members.comunaId` referencia a `comunas.id` — la región se obtiene a través de la relación `comuna → region`.
 - `regiones` y `comunas` se pueblan mediante un seeder al iniciar la app (solo si las tablas están vacías).
 - No se permite eliminación física de regiones ni comunas que tengan miembros asociados.
+- `PagoCuota` y `AporteVoluntario` no tienen `@UpdateDateColumn` — son registros inmutables.
 
 ---
 
@@ -1326,6 +1501,23 @@ src/
 │       ├── csv.exporter.ts         # Generador de archivos CSV
 │       ├── xlsx.exporter.ts        # Generador de archivos XLSX (exceljs)
 │       └── pdf.exporter.ts         # Generador de archivos PDF (pdfkit)
+│
+├── finanzas/                       # Ingresos y egresos de la agrupación
+│   ├── dto/
+│   │   ├── create-tarifa-anual.dto.ts
+│   │   ├── create-pago-cuota.dto.ts
+│   │   ├── create-aporte-voluntario.dto.ts
+│   │   ├── create-donacion.dto.ts
+│   │   └── filtro-cuotas.dto.ts
+│   ├── entities/
+│   │   ├── tarifa-anual.entity.ts       # año, valor_uf, montos en UF, definido_por
+│   │   ├── cuota.entity.ts              # tipo enum, estado enum, fecha_pago_completo; unique (miembro,tipo,año)
+│   │   ├── pago-cuota.entity.ts         # miembro_id (quien paga) + registrado_por; inmutable
+│   │   ├── aporte-voluntario.entity.ts  # miembro_id, monto_clp, concepto; inmutable
+│   │   └── donacion.entity.ts           # donante_id (FK Donante pendiente); inmutable
+│   ├── finanzas.controller.ts           # POST/GET /finanzas/tarifas-anuales, /finanzas/cuotas, /finanzas/aportes, /finanzas/donaciones
+│   ├── finanzas.service.ts              # genera cuotas al crear TarifaAnual o miembro; calcula estado PAGADA
+│   └── finanzas.module.ts
 │
 └── common/                         # Utilidades compartidas
     ├── dto/
