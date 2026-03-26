@@ -1149,7 +1149,7 @@ export class Cuota {
   @Column({ type: 'varchar' }) tipo: TipoCuota;
   @Column() año: number;
   @Column({ type: 'decimal' }) monto_asignado_uf: number;
-  @Column({ type: 'decimal' }) monto_asignado_clp: number;  // UF × valor_uf al día de asignación
+  @Column({ type: 'integer' }) monto_asignado_clp: number;  // UF × valor_uf al día de asignación (pesos chilenos, siempre entero)
   @Column({ type: 'varchar', default: EstadoCuota.IMPAGA }) estado: EstadoCuota;
   @Column({ nullable: true }) fecha_pago_completo: Date;    // se registra automáticamente al completar
   @CreateDateColumn() createdAt: Date;
@@ -1166,7 +1166,7 @@ export class PagoCuota {
   @ManyToOne(() => Cuota) @JoinColumn({ name: 'cuota_id' }) cuota: Cuota;
   @Column() miembro_id: string;
   @ManyToOne(() => Member) @JoinColumn({ name: 'miembro_id' }) miembro: Member;  // quien realiza el pago
-  @Column({ type: 'decimal' }) monto_clp: number;
+  @Column({ type: 'integer' }) monto_clp: number;  // pesos chilenos, siempre entero
   @Column() fecha_pago: Date;
   @Column() registrado_por_id: number;
   @ManyToOne(() => User) @JoinColumn({ name: 'registrado_por_id' }) registrado_por: User;
@@ -1183,7 +1183,7 @@ export class AporteVoluntario {
   @PrimaryGeneratedColumn('uuid') id: string;
   @Column() miembro_id: string;
   @ManyToOne(() => Member) @JoinColumn({ name: 'miembro_id' }) miembro: Member;
-  @Column({ type: 'decimal' }) monto_clp: number;
+  @Column({ type: 'integer' }) monto_clp: number;  // pesos chilenos, siempre entero
   @Column() fecha: Date;
   @Column() concepto: string;
   @Column() registrado_por_id: number;
@@ -1200,7 +1200,7 @@ export class AporteVoluntario {
 export class Donacion {
   @PrimaryGeneratedColumn('uuid') id: string;
   @Column() donante_id: string;             // FK → Donante (pendiente diseño)
-  @Column({ type: 'decimal' }) monto_clp: number;
+  @Column({ type: 'integer' }) monto_clp: number;  // pesos chilenos, siempre entero
   @Column() fecha: Date;
   @Column() concepto: string;
   @Column() registrado_por_id: number;
