@@ -94,6 +94,12 @@ describe('UsersService', () => {
       const result = await service.create(createDto);
 
       expect(result).not.toHaveProperty('password');
+      expect(result).not.toHaveProperty('tokenActivacion');
+      expect(result).not.toHaveProperty('tokenExpiracion');
+      expect(result).not.toHaveProperty('resetPasswordToken');
+      expect(result).not.toHaveProperty('resetPasswordExpires');
+      expect(result).not.toHaveProperty('refreshToken');
+      expect(result).not.toHaveProperty('refreshTokenExpires');
       expect(result).toHaveProperty('cuentaActivada', false);
       expect(repo.save).toHaveBeenCalled();
       expect(mailerService.enviarActivacion).toHaveBeenCalledWith(
@@ -149,6 +155,9 @@ describe('UsersService', () => {
       expect(result.data).toHaveLength(1);
       expect(result.total).toBe(1);
       expect(result.data[0]).not.toHaveProperty('password');
+      expect(result.data[0]).not.toHaveProperty('tokenActivacion');
+      expect(result.data[0]).not.toHaveProperty('refreshToken');
+      expect(result.data[0]).not.toHaveProperty('resetPasswordToken');
     });
 
     it('debe retornar lista vacía si no hay usuarios', async () => {
@@ -168,6 +177,9 @@ describe('UsersService', () => {
       const result = await service.findOne(1);
 
       expect(result).not.toHaveProperty('password');
+      expect(result).not.toHaveProperty('tokenActivacion');
+      expect(result).not.toHaveProperty('refreshToken');
+      expect(result).not.toHaveProperty('resetPasswordToken');
       expect(result.id).toBe(1);
     });
 
@@ -234,6 +246,9 @@ describe('UsersService', () => {
       const result = await service.updateRol(1, { rol: Rol.SECRETARIO });
 
       expect(result).not.toHaveProperty('password');
+      expect(result).not.toHaveProperty('tokenActivacion');
+      expect(result).not.toHaveProperty('refreshToken');
+      expect(result).not.toHaveProperty('resetPasswordToken');
       expect(result.rol).toBe(Rol.SECRETARIO);
       expect(repo.save).toHaveBeenCalledWith(
         expect.objectContaining({ rol: Rol.SECRETARIO }),

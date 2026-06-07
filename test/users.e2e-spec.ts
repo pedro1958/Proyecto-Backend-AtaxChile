@@ -5,6 +5,9 @@ import * as request from 'supertest';
 import { User, Rol } from '../src/users/entities/user.entity';
 import { UsersModule } from '../src/users/users.module';
 import { MailerService } from '../src/mailer/mailer.service';
+import { AuditService } from '../src/audit/audit.service';
+import { AuditLog } from '../src/audit/entities/audit-log.entity';
+import { SelfGuard } from '../src/auth/guards/self.guard';
 
 const mockUser: User = {
   id: 1,
@@ -20,19 +23,29 @@ const mockUser: User = {
   resetPasswordExpires: null,
   refreshToken: null,
   refreshTokenExpires: null,
+  emailPendiente: null,
+  tokenEmailCambio: null,
+  tokenEmailCambioExpires: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
 
 const mockRepo = {
   findOneBy: jest.fn(),
+  findOne: jest.fn().mockResolvedValue(mockUser),
   find: jest.fn().mockResolvedValue([mockUser]),
+  findAndCount: jest.fn().mockResolvedValue([[mockUser], 1]),
+  count: jest.fn().mockResolvedValue(1),
   create: jest.fn().mockReturnValue(mockUser),
   save: jest.fn().mockResolvedValue(mockUser),
 };
 
 const mockMailer = {
   enviarActivacion: jest.fn().mockResolvedValue(undefined),
+};
+
+const mockAudit = {
+  registrar: jest.fn().mockResolvedValue(undefined),
 };
 
 describe('Users (e2e)', () => {
@@ -46,6 +59,12 @@ describe('Users (e2e)', () => {
       .useValue(mockRepo)
       .overrideProvider(MailerService)
       .useValue(mockMailer)
+      .overrideProvider(AuditService)
+      .useValue(mockAudit)
+      .overrideProvider(getRepositoryToken(AuditLog))
+      .useValue({ save: jest.fn(), find: jest.fn(), findOneBy: jest.fn() })
+      .overrideGuard(SelfGuard)
+      .useValue({ canActivate: () => true })
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -62,37 +81,46 @@ describe('Users (e2e)', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRepo.findOneBy.mockResolvedValue(mockUser);
+    mockRepo.findOne.mockResolvedValue(mockUser);
     mockRepo.find.mockResolvedValue([mockUser]);
+    mockRepo.findAndCount.mockResolvedValue([[mockUser], 1]);
+    mockRepo.count.mockResolvedValue(1);
     mockRepo.create.mockReturnValue(mockUser);
     mockRepo.save.mockResolvedValue(mockUser);
     mockMailer.enviarActivacion.mockResolvedValue(undefined);
   });
 
   describe('GET /api/v1/users', () => {
-    it('debe retornar lista de usuarios sin password', async () => {
+    it('debe retornar lista paginada de usuarios sin password', async () => {
       const res = await request(app.getHttpServer())
         .get('/api/v1/users')
         .expect(200);
 
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body[0]).not.toHaveProperty('password');
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data[0]).not.toHaveProperty('password');
+      expect(res.body.data[0]).not.toHaveProperty('tokenActivacion');
+      expect(res.body.data[0]).not.toHaveProperty('refreshToken');
+      expect(res.body).toHaveProperty('total');
     });
   });
 
   describe('GET /api/v1/users/:id', () => {
-    it('debe retornar usuario sin password', async () => {
+    it('debe retornar perfil del usuario (nombre, email, rol)', async () => {
       mockRepo.findOneBy.mockResolvedValue(mockUser);
 
       const res = await request(app.getHttpServer())
         .get('/api/v1/users/1')
         .expect(200);
 
+      expect(res.body).toHaveProperty('nombre');
+      expect(res.body).toHaveProperty('email');
+      expect(res.body).toHaveProperty('rol');
       expect(res.body).not.toHaveProperty('password');
-      expect(res.body.id).toBe(1);
     });
 
     it('debe retornar 404 si el usuario no existe', async () => {
-      mockRepo.findOneBy.mockResolvedValue(null);
+      mockRepo.findOne.mockResolvedValue(null);
 
       await request(app.getHttpServer()).get('/api/v1/users/999').expect(404);
     });
@@ -102,17 +130,16 @@ describe('Users (e2e)', () => {
     });
   });
 
-  describe('POST /api/v1/users', () => {
+  describe('POST /api/v1/users/register', () => {
     it('debe crear usuario, enviar correo y retornar mensaje de confirmación', async () => {
       mockRepo.findOneBy.mockResolvedValue(null);
 
       const res = await request(app.getHttpServer())
-        .post('/api/v1/users')
+        .post('/api/v1/users/register')
         .send({
           nombre: 'Admin',
           email: 'admin@test.cl',
-          password: 'password123',
-          rol: Rol.ADMIN,
+          password: 'Password123',
         })
         .expect(201);
 
@@ -127,31 +154,29 @@ describe('Users (e2e)', () => {
 
     it('debe retornar 400 si faltan campos obligatorios', async () => {
       await request(app.getHttpServer())
-        .post('/api/v1/users')
+        .post('/api/v1/users/register')
         .send({ nombre: 'Admin' })
         .expect(400);
     });
 
     it('debe retornar 400 si el password es menor a 8 caracteres', async () => {
       await request(app.getHttpServer())
-        .post('/api/v1/users')
+        .post('/api/v1/users/register')
         .send({
           nombre: 'Admin',
           email: 'admin@test.cl',
           password: '123',
-          rol: Rol.ADMIN,
         })
         .expect(400);
     });
 
-    it('debe retornar 400 si el rol no es válido', async () => {
+    it('debe retornar 400 si el password no cumple la política (sin mayúscula)', async () => {
       await request(app.getHttpServer())
-        .post('/api/v1/users')
+        .post('/api/v1/users/register')
         .send({
           nombre: 'Admin',
           email: 'admin@test.cl',
           password: 'password123',
-          rol: 'gestor',
         })
         .expect(400);
     });
@@ -163,12 +188,11 @@ describe('Users (e2e)', () => {
       });
 
       const res = await request(app.getHttpServer())
-        .post('/api/v1/users')
+        .post('/api/v1/users/register')
         .send({
           nombre: 'Admin',
           email: 'admin@test.cl',
-          password: 'password123',
-          rol: Rol.ADMIN,
+          password: 'Password123',
         })
         .expect(409);
 
@@ -182,12 +206,11 @@ describe('Users (e2e)', () => {
       });
 
       const res = await request(app.getHttpServer())
-        .post('/api/v1/users')
+        .post('/api/v1/users/register')
         .send({
           nombre: 'Admin',
           email: 'admin@test.cl',
-          password: 'password123',
-          rol: Rol.ADMIN,
+          password: 'Password123',
         })
         .expect(409);
 
@@ -196,16 +219,16 @@ describe('Users (e2e)', () => {
   });
 
   describe('PUT /api/v1/users/:id', () => {
-    it('debe actualizar usuario', async () => {
+    it('debe actualizar usuario y retornar mensaje de confirmación', async () => {
       mockRepo.findOneBy.mockResolvedValue(mockUser);
       mockRepo.save.mockResolvedValue({ ...mockUser, nombre: 'Nuevo Nombre' });
 
       const res = await request(app.getHttpServer())
         .put('/api/v1/users/1')
-        .send({ nombre: 'Nuevo Nombre', rol: Rol.SECRETARIO })
+        .send({ nombre: 'Nuevo Nombre' })
         .expect(200);
 
-      expect(res.body).not.toHaveProperty('password');
+      expect(res.body).toHaveProperty('message');
     });
 
     it('debe retornar 404 si el usuario no existe', async () => {
