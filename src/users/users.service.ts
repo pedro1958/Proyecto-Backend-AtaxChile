@@ -225,6 +225,9 @@ export class UsersService {
 
     usuario.password = await bcrypt.hash(nuevaPassword, 10);
     await this.usersRepository.save(usuario);
+    this.auditService
+      .registrar({ accion: AccionAudit.CAMBIAR_PASSWORD, usuarioId: id })
+      .catch(() => {});
   }
 
   async solicitarRecuperacion(email: string): Promise<void> {
@@ -261,6 +264,13 @@ export class UsersService {
     usuario.resetPasswordToken = null;
     usuario.resetPasswordExpires = null;
     await this.usersRepository.save(usuario);
+    this.auditService
+      .registrar({
+        accion: AccionAudit.CAMBIAR_PASSWORD,
+        usuarioId: usuario.id,
+        detalle: { via: 'recuperacion' },
+      })
+      .catch(() => {});
   }
 
   async activarCuenta(token: string): Promise<void> {
@@ -276,6 +286,9 @@ export class UsersService {
     usuario.tokenActivacion = null;
     usuario.tokenExpiracion = null;
     await this.usersRepository.save(usuario);
+    this.auditService
+      .registrar({ accion: AccionAudit.ACTIVAR_CUENTA, usuarioId: usuario.id })
+      .catch(() => {});
   }
 
   private sinPassword(usuario: User): UserSinPassword {
