@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import basicAuth from 'express-basic-auth';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -19,6 +20,14 @@ async function bootstrap() {
   app.enableCors({
     origin: process.env.FRONTEND_URL,
   });
+
+  app.use(
+    '/api/docs',
+    basicAuth({
+      users: { admin: process.env.SWAGGER_PASSWORD ?? 'changeme' },
+      challenge: true,
+    }),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('AtaxChile API')
