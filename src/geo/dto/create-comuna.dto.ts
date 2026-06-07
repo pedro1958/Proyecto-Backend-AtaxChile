@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsPositive, IsString } from 'class-validator';
+import { IsInt, IsNotEmpty, IsPositive, IsString, MaxLength } from 'class-validator';
 
 export class CreateComunaDto {
   @ApiProperty({
@@ -8,6 +8,7 @@ export class CreateComunaDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
   nombre: string;
 
   @ApiProperty({

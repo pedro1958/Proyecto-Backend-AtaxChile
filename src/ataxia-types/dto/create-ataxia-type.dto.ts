@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 import { GrupoAtaxia } from '../entities/ataxia-type.entity';
 
 export class CreateAtaxiaTypeDto {
@@ -9,6 +9,7 @@ export class CreateAtaxiaTypeDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
   nombre: string;
 
   @ApiProperty({
@@ -25,5 +26,6 @@ export class CreateAtaxiaTypeDto {
   })
   @IsString()
   @IsOptional()
+  @MaxLength(500)
   descripcion?: string;
 }
