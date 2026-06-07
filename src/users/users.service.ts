@@ -18,7 +18,16 @@ import { PaginatedResult } from '../common/types/response.types';
 import { AuditService } from '../audit/audit.service';
 import { AccionAudit } from '../audit/entities/audit-log.entity';
 
-type UserSinPassword = Omit<User, 'password'>;
+type UserSinPassword = Omit<
+  User,
+  | 'password'
+  | 'tokenActivacion'
+  | 'tokenExpiracion'
+  | 'resetPasswordToken'
+  | 'resetPasswordExpires'
+  | 'refreshToken'
+  | 'refreshTokenExpires'
+>;
 type PerfilUsuario = Pick<User, 'nombre' | 'email' | 'rol'>;
 
 @Injectable()
@@ -270,7 +279,16 @@ export class UsersService {
   }
 
   private sinPassword(usuario: User): UserSinPassword {
-    const { password: _password, ...resto } = usuario;
+    const {
+      password: _password,
+      tokenActivacion: _ta,
+      tokenExpiracion: _te,
+      resetPasswordToken: _rpt,
+      resetPasswordExpires: _rpe,
+      refreshToken: _rt,
+      refreshTokenExpires: _rte,
+      ...resto
+    } = usuario;
     return resto;
   }
 }
