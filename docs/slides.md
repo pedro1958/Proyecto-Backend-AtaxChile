@@ -482,14 +482,14 @@ SwaggerModule.setup('api/docs', app, document);
 
 ## Registro inmutable de eventos del sistema
 
-| Campo       | Tipo            | Descripción |
-|-------------|-----------------|-------------|
+| Campo       | Tipo            | Descripción                                   |
+| ----------- | --------------- | --------------------------------------------- |
 | `accion`    | enum            | LOGIN · CREAR_MIEMBRO · MODIFICAR_MIEMBRO · … |
-| `entidad`   | varchar         | Tabla afectada (`miembros`, `users`, etc.) |
-| `entidadId` | varchar \| null | ID del registro afectado |
-| `detalle`   | json \| null    | Campos cambiados u otros datos del evento |
-| `usuarioId` | FK \| null      | Quién ejecutó la acción |
-| `ip`        | varchar \| null | IP del cliente |
+| `entidad`   | varchar         | Tabla afectada (`miembros`, `users`, etc.)    |
+| `entidadId` | varchar \| null | ID del registro afectado                      |
+| `detalle`   | json \| null    | Campos cambiados u otros datos del evento     |
+| `usuarioId` | FK \| null      | Quién ejecutó la acción                       |
+| `ip`        | varchar \| null | IP del cliente                                |
 
 - **Append-only** — sin UPDATE ni DELETE
 - `AuditService` es interno — los servicios lo inyectan; no hay endpoint de creación
@@ -500,10 +500,10 @@ SwaggerModule.setup('api/docs', app, document);
 
 # Módulo Audit — Endpoints
 
-| Método | Ruta                      | Acceso     | Descripción                          |
-|--------|---------------------------|------------|--------------------------------------|
-| `GET`  | `/audit-logs`             | SUPERADMIN | Lista paginada con filtros           |
-| `GET`  | `/audit-logs/:id`         | SUPERADMIN | Detalle de un evento específico      |
+| Método | Ruta              | Acceso     | Descripción                     |
+| ------ | ----------------- | ---------- | ------------------------------- |
+| `GET`  | `/audit-logs`     | SUPERADMIN | Lista paginada con filtros      |
+| `GET`  | `/audit-logs/:id` | SUPERADMIN | Detalle de un evento específico |
 
 **Filtros disponibles en `GET /audit-logs`:**
 
@@ -521,14 +521,14 @@ SwaggerModule.setup('api/docs', app, document);
 
 ## Exportación de datos — CSV / XLSX / PDF
 
-| Campo          | Tipo       | Descripción                        |
-| -------------- | ---------- | --------------------------------- |
-| `formato`      | enum       | `csv` · `xlsx` · `pdf`           |
-| `estado`       | string     | Filtrar por estado del socio      |
-| `regionId`     | number     | Filtrar por región                |
-| `tipoAtaxiaId` | number     | Filtrar por tipo de ataxia        |
-| `fechaDesde`   | ISO date   | Filtrar por fecha de ingreso      |
-| `fechaHasta`   | ISO date   | Filtrar por fecha de ingreso      |
+| Campo          | Tipo     | Descripción                  |
+| -------------- | -------- | ---------------------------- |
+| `formato`      | enum     | `csv` · `xlsx` · `pdf`       |
+| `estado`       | string   | Filtrar por estado del socio |
+| `regionId`     | number   | Filtrar por región           |
+| `tipoAtaxiaId` | number   | Filtrar por tipo de ataxia   |
+| `fechaDesde`   | ISO date | Filtrar por fecha de ingreso |
+| `fechaHasta`   | ISO date | Filtrar por fecha de ingreso |
 
 ---
 
@@ -542,6 +542,7 @@ SwaggerModule.setup('api/docs', app, document);
 **Formatos disponibles:** `?formato=csv` · `?formato=xlsx` · `?formato=pdf`
 
 **Columnas por rol:**
+
 - ADMIN / SECRETARIO: todos los campos incluyendo diagnóstico y evaluaciones
 - TESORERO: columnas reducidas (sin datos clínicos sensibles)
 
@@ -571,7 +572,7 @@ SwaggerModule.setup('api/docs', app, document);
 
 # Próximos Pasos
 
-1. Implementar módulo `cuotas` (TarifaAnual + Cuota, diseño documentado)
+1. Implementar módulo `cuotas` (TarifaAnual + Cuota, diseño documentado) y además todos los módulos que sean parte de finanzas queda para otras etapas de este proyecto por decisión de la directiva de la asociación.
 2. Migraciones TypeORM para paso a producción
 3. Tests e2e para módulos de diagnóstico, evaluación y stats
 
