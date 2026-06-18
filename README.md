@@ -5,6 +5,15 @@ Stack: **NestJS 11 · TypeORM · PostgreSQL 16 · JWT · Resend**
 
 ---
 
+## Documentación
+
+| Documento | Descripción |
+|-----------|-------------|
+| [Diseño de API](docs/api-design.md) | Decisiones de diseño y estructura de endpoints |
+| [Presentación](docs/slides.md) | Slides del proyecto |
+
+---
+
 ## Requisitos previos
 
 | Herramienta | Versión mínima |
