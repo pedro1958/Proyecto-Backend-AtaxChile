@@ -2,6 +2,7 @@
 marp: true
 theme: default
 paginate: true
+size: 16:9
 style: |
   section {
     font-family: 'Segoe UI', sans-serif;
@@ -24,23 +25,14 @@ style: |
   section.modulo {
     background: #f0f4ff;
   }
-  h1 { color: #1a1a2e; border-bottom: 3px solid #4a90d9; padding-bottom: 0.3rem; }
+  h1 { color: #1a1a2e; padding-bottom: 0.3rem; }
   h2 { color: #2d5fa6; }
-  code { background: #eef2ff; color: #1a1a2e; padding: 2px 6px; border-radius: 4px; }
+  code { background: #eef2ff; color: #1a1a2e; padding: 2px 6px; }
   table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
   th { background: #1a1a2e; color: #ffffff; padding: 6px 10px; }
   td { border: 1px solid #dde; padding: 5px 10px; }
   tr:nth-child(even) td { background: #f5f7ff; }
   ul li { margin-bottom: 0.3rem; }
-  .badge {
-    display: inline-block;
-    background: #4a90d9;
-    color: white;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    margin-right: 4px;
-  }
 ---
 
 <!-- _class: lead -->
@@ -158,6 +150,8 @@ POST /auth/change-password  → cambia contraseña conociendo la actual
 
 **Ruta:** `POST /users/register` (pública)
 
+<style scoped>pre { font-size: 0.78rem; }</style>
+
 ```
 1. Cliente envía: nombre, email, password
        ↓
@@ -181,6 +175,8 @@ POST /auth/change-password  → cambia contraseña conociendo la actual
 
 **Ruta de activación:** `GET /users/activar/:token` (pública)
 
+<style scoped>pre { font-size: 0.78rem; }</style>
+
 ```
 7. Envía email con enlace: /activar?token=<token>
        ↓
@@ -203,6 +199,8 @@ POST /auth/change-password  → cambia contraseña conociendo la actual
 
 **Ruta:** `POST /auth/forgot-password` (pública)
 
+<style scoped>pre { font-size: 0.78rem; }</style>
+
 ```
 POST /auth/forgot-password  { email }
   → Busca usuario por email
@@ -220,6 +218,8 @@ POST /auth/forgot-password  { email }
 # Recuperación de Contraseña — Paso 2
 
 **Ruta:** `POST /auth/reset-password` (pública)
+
+<style scoped>pre { font-size: 0.78rem; }</style>
 
 ```
 POST /auth/reset-password  { token, nuevaPassword }
@@ -404,6 +404,9 @@ export enum TipoRepresentacion {
 
 # API REST — Endpoints por Módulo (1/2)
 
+<!-- Tabla ancha: font reducido para evitar desborde en PPTX -->
+<style scoped>table { font-size: 0.72rem; } td, th { padding: 4px 7px; }</style>
+
 | Módulo              | Base                         | Operaciones                                                                                 |
 | ------------------- | ---------------------------- | ------------------------------------------------------------------------------------------- |
 | Auth                | `/auth`                      | login, refresh, logout, forgot/reset/change-password                                        |
@@ -419,6 +422,8 @@ export enum TipoRepresentacion {
 ---
 
 # API REST — Endpoints por Módulo (2/2)
+
+<style scoped>table { font-size: 0.72rem; } td, th { padding: 4px 7px; }</style>
 
 | Módulo        | Base          | Operaciones                                                           |
 | ------------- | ------------- | --------------------------------------------------------------------- |
